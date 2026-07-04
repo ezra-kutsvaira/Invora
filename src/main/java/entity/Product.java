@@ -21,7 +21,7 @@ public class Product {
 
     @NotBlank
     @Column(nullable = false)
-    private String name;
+    private String productName;
 
     @Column(length = 1000)
     @Size(max = 1000)
@@ -64,8 +64,8 @@ public class Product {
         return id;
     }
 
-    public String getName() {
-        return name;
+    public String getProductName() {
+        return productName;
     }
 
     public String getDescription() {
@@ -96,8 +96,8 @@ public class Product {
         this.id = id;
     }
 
-    public void setName(String name) {
-        this.name = name;
+    public void setproductName(String name) {
+        this.productName = productName;
     }
 
     public void setDescription(String description) {
