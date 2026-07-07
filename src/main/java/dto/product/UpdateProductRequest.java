@@ -1,4 +1,15 @@
 package dto.product;
 
-public record UpdateProductRequest() {
+import jakarta.validation.constraints.PositiveOrZero;
+import java.math.BigDecimal;
+
+public record UpdateProductRequest(
+        String name,
+        String description,
+
+        @PositiveOrZero(message = "Unit price cannot be negative")
+        BigDecimal unitPrice,
+
+        Boolean active
+) {
 }

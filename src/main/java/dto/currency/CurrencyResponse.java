@@ -1,4 +1,18 @@
 package dto.currency;
 
-public record CurrencyResponse() {
+import java.math.BigDecimal;
+
+public record CurrencyResponse(
+        Long id,
+
+        String code,
+
+        String name,
+
+        String symbol,
+
+        BigDecimal exchangeRateToBase,
+
+        boolean active
+) {
 }
