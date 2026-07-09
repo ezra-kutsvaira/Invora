@@ -14,6 +14,7 @@ public record CreateCustomerRequest(
         String address,
         String city,
         String country,
-        String taxNumber
+        String tinNumber,
+        String vatNumber
         )
 {}
