@@ -47,5 +47,4 @@ public interface InvoiceMapper {
         customer.setId(customerId);
         return customer;
     }
-
 }
