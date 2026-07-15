@@ -13,7 +13,7 @@ import repository.CustomerRepository;
 import service.CustomerService;
 
 import java.util.List;
-import java.util.stream.StreamSupport;
+
 
 @Service
 @Transactional
@@ -31,7 +31,7 @@ public class CustomerServiceImpl implements CustomerService {
     @Override
     public CustomerResponse createCustomer(CreateCustomerRequest request) {
         //validation
-        validateUniquEmail(request.email(),null);
+        validateUniqueEmail(request.email(),null);
         validateUniquePhone(request.phone(), null);
 
         Customer customer  = customerMapper.toEntity(request);
@@ -59,21 +59,71 @@ public class CustomerServiceImpl implements CustomerService {
 
     @Override
     public List<CustomerSummaryResponse> getCustomerSummaries() {
-        return List.of();
+        List<Customer> customers = customerRepository.findByActiveTrue();
+        return customerMapper.toSummaryResponseList(customers);
     }
 
     @Override
     public CustomerResponse updateCustomer(Long customerId, UpdateCustomerRequest request) {
-        return null;
+        Customer existingCustomer = findCustomerById(customerId);
+        validateUniqueEmail(request.email(), existingCustomer);
+        validateUniquePhone(request.phone(), existingCustomer);
+
+        customerMapper.updateEntityFromRequest(request,existingCustomer);
+
+        Customer updatedCustomer = customerRepository.save(existingCustomer);
+
+        return customerMapper.toResponse(updatedCustomer);
     }
 
     @Override
     public void deleteCustomer(Long customerId) {
-
+        Customer customer = findCustomerById(customerId);
+        customerRepository.delete(customer);
     }
 
     @Override
     public List<CustomerResponse> searchCustomers(String keyword) {
-        return List.of();
+        if(keyword == null || keyword.isEmpty()){
+            return getAllCustomers();
+        }
+        List<Customer> customers = customerRepository.findByCustomerNameContainingIgnoreCase(keyword.trim());
+        return customerMapper.toResponseList(customers);
+    }
+
+    private Customer findCustomerById(Long customerId) {
+        if(customerId == null){
+            throw new IllegalArgumentException("Customer id is null");
+        }
+        return customerRepository.findById(customerId)
+                .orElseThrow(() -> new EntityNotFoundException("Customer with ID " + customerId + " not found"));
+    }
+
+    //Email Validation
+    private void validateUniqueEmail(String email, Customer existingCustomer){
+        if(email == null || email.isEmpty()){
+            return;
+        }
+
+        boolean emailBelongsToCurrentCustomer = existingCustomer != null && existingCustomer.getEmail() != null && existingCustomer.getEmail().equalsIgnoreCase(email);
+        if (!emailBelongsToCurrentCustomer && customerRepository.existsByEmail(email)) {
+
+            throw new IllegalArgumentException(
+                    "A customer with email " + email + " already exists"
+            );
+        }
+    }
+
+    private void validateUniquePhone(String phone,Customer existingCustomer) {
+        if (phone == null || phone.isEmpty()) {
+            return;
+        }
+        boolean phoneBelongsToCurrentCustomer = existingCustomer != null && existingCustomer.getPhone() != null && existingCustomer.getPhone().equals(phone);
+
+        if (!phoneBelongsToCurrentCustomer && customerRepository.existsByPhoneNumber(phone)) {
+
+            throw new IllegalArgumentException("A customer with phone number " + phone + " already exists"
+            );
+        }
     }
 }
