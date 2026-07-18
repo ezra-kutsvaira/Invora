@@ -66,7 +66,9 @@ public class CustomerServiceImpl implements CustomerService {
     @Override
     public CustomerResponse updateCustomer(Long customerId, UpdateCustomerRequest request) {
         Customer existingCustomer = findCustomerById(customerId);
+
         validateUniqueEmail(request.email(), existingCustomer);
+
         validateUniquePhone(request.phone(), existingCustomer);
 
         customerMapper.updateEntityFromRequest(request,existingCustomer);
@@ -108,8 +110,7 @@ public class CustomerServiceImpl implements CustomerService {
         boolean emailBelongsToCurrentCustomer = existingCustomer != null && existingCustomer.getEmail() != null && existingCustomer.getEmail().equalsIgnoreCase(email);
         if (!emailBelongsToCurrentCustomer && customerRepository.existsByEmail(email)) {
 
-            throw new IllegalArgumentException(
-                    "A customer with email " + email + " already exists"
+            throw new IllegalArgumentException("A customer with email " + email + " already exists"
             );
         }
     }
