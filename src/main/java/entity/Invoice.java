@@ -236,6 +236,8 @@ public class Invoice {
     public void setPayments(List<Payment> payments) {
         this.payments = payments;
     }
+
+
 }
 
 

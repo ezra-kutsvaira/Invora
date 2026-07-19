@@ -28,7 +28,6 @@ public class CompanyProfileServiceImpl implements CompanyProfileService {
     @Override
     public CompanyProfileResponse createCompanyProfile(CreateCompanyProfileRequest request) {
 
-        
        validateCompanyProfileDoesNotExist();
 
         CompanyProfile companyProfile = companyProfileMapper.toEntity(request);
