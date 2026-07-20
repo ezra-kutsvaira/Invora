@@ -41,7 +41,6 @@ public class InvoiceItemServiceImpl implements InvoiceItemService {
     @Override
     public InvoiceItemResponse addItemToInvoice(Long invoiceId, CreateInvoiceItemRequest request) {
 
-        //Find the invoice
         Invoice invoice = findInvoiceById(invoiceId);
 
         validateInvoiceCanBeModified(invoice);
