@@ -37,6 +37,7 @@ public class InvoiceServiceImpl implements InvoiceService {
 
     @Override
     public InvoiceResponse createInvoice(CreateInvoiceRequest createInvoiceRequest) {
+
         validateInvoiceDates(createInvoiceRequest.invoiceDate(), createInvoiceRequest.dueDate());
 
         Customer customer = findCustomerById(createInvoiceRequest.customerId());
@@ -118,6 +119,7 @@ public class InvoiceServiceImpl implements InvoiceService {
 
         validateInvoiceDates(invoiceDate, dueDate);
 
+        //updating the customer on the invoice
         if (request.customerId() != null) {
             Customer customer = findCustomerById(request.customerId());
 
@@ -127,6 +129,7 @@ public class InvoiceServiceImpl implements InvoiceService {
         invoiceMapper.updateEntityRequest(request, existingInvoice);
 
         bindItemsToInvoice(existingInvoice);
+
         calculateInvoiceTotals(existingInvoice);
 
         Invoice updatedInvoice = invoiceRepository.save(existingInvoice);
@@ -261,6 +264,7 @@ public class InvoiceServiceImpl implements InvoiceService {
 
         BigDecimal taxAmount = defaultToZero(invoice.getTaxAmount());
 
+        //preventing discounts to be more than the total
         if (discountAmount.compareTo(subtotal) > 0) {
             throw new IllegalArgumentException("Discount amount cannot be greater than subtotal");
         }
