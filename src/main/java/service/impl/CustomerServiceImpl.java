@@ -86,7 +86,7 @@ public class CustomerServiceImpl implements CustomerService {
 
     @Override
     public List<CustomerResponse> searchCustomers(String keyword) {
-        if(keyword == null || keyword.isEmpty()){
+        if(keyword == null || keyword.isBlank()){
             return getAllCustomers();
         }
         List<Customer> customers = customerRepository.findByCustomerNameContainingIgnoreCase(keyword.trim());
