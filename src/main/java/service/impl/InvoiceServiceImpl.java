@@ -28,11 +28,13 @@ public class InvoiceServiceImpl implements InvoiceService {
     private final InvoiceRepository invoiceRepository;
     private final InvoiceMapper invoiceMapper;
     private final CustomerRepository customerRepository;
+    private final InvoiceCalculationService invoiceCalculationService;
 
-    public InvoiceServiceImpl(InvoiceRepository invoiceRepository, InvoiceMapper invoiceMapper, CustomerRepository customerRepository) {
+    public InvoiceServiceImpl(InvoiceRepository invoiceRepository, InvoiceMapper invoiceMapper, CustomerRepository customerRepository, InvoiceCalculationService invoiceCalculationService) {
         this.invoiceRepository = invoiceRepository;
         this.invoiceMapper = invoiceMapper;
         this.customerRepository = customerRepository;
+        this.invoiceCalculationService = invoiceCalculationService;
     }
 
     @Override
@@ -49,7 +51,8 @@ public class InvoiceServiceImpl implements InvoiceService {
         invoice.setStatus(InvoiceStatus.DRAFT);
 
         bindItemsToInvoice(invoice);
-        calculateInvoiceTotals(invoice);
+
+        invoiceCalculationService.recalculateInvoiceTotals(invoice);
 
         Invoice savedInvoice = invoiceRepository.save(invoice);
 
@@ -130,7 +133,7 @@ public class InvoiceServiceImpl implements InvoiceService {
 
         bindItemsToInvoice(existingInvoice);
 
-        calculateInvoiceTotals(existingInvoice);
+        invoiceCalculationService.recalculateInvoiceTotals(existingInvoice);
 
         Invoice updatedInvoice = invoiceRepository.save(existingInvoice);
 
@@ -151,7 +154,7 @@ public class InvoiceServiceImpl implements InvoiceService {
             throw new IllegalStateException("An invoice must contain at least one item");
         }
 
-        calculateInvoiceTotals(invoice);
+        invoiceCalculationService.recalculateInvoiceTotals(invoice);
 
         invoice.setStatus(InvoiceStatus.SENT);
 
@@ -242,80 +245,11 @@ public class InvoiceServiceImpl implements InvoiceService {
 
         for (InvoiceItem item : invoice.getItems()) {
             item.setInvoice(invoice);
-            item.calculateLineTotal();
+            invoiceCalculationService.calculateLineTotal(item);
         }
     }
 
-    private void calculateInvoiceTotals(Invoice invoice) {
 
-        BigDecimal subtotal = BigDecimal.ZERO;
-
-        if (invoice.getItems() != null) {
-            subtotal = invoice.getItems()
-                    .stream()
-                    .map(this::calculateLineTotal)
-                    .reduce(
-                            BigDecimal.ZERO,
-                            BigDecimal::add
-                    );
-        }
-
-        BigDecimal discountAmount = defaultToZero(invoice.getDiscountAmount());
-
-        BigDecimal taxAmount = defaultToZero(invoice.getTaxAmount());
-
-        //preventing discounts to be more than the total
-        if (discountAmount.compareTo(subtotal) > 0) {
-            throw new IllegalArgumentException("Discount amount cannot be greater than subtotal");
-        }
-
-        BigDecimal totalAmount = subtotal
-                .subtract(discountAmount)
-                .add(taxAmount);
-
-        BigDecimal amountPaid =
-                defaultToZero(invoice.getAmountPaid());
-
-        BigDecimal balanceDue =
-                totalAmount.subtract(amountPaid);
-
-        if (balanceDue.compareTo(BigDecimal.ZERO) < 0) {
-            balanceDue = BigDecimal.ZERO;
-        }
-
-        invoice.setSubtotal(subtotal);
-        invoice.setDiscountAmount(discountAmount);
-        invoice.setTaxAmount(taxAmount);
-        invoice.setTotalAmount(totalAmount);
-        invoice.setAmountPaid(amountPaid);
-        invoice.setBalanceDue(balanceDue);
-    }
-
-    private BigDecimal calculateLineTotal(
-            InvoiceItem item
-    ) {
-        if (item.getQuantity() == null || item.getUnitPrice() == null) {
-
-            throw new IllegalArgumentException("Every invoice item must have a quantity and unit price");
-        }
-
-        BigDecimal lineTotal = item.getUnitPrice()
-                .multiply(
-                        BigDecimal.valueOf(item.getQuantity())
-                );
-
-        item.setLineTotal(lineTotal);
-
-        return lineTotal;
-    }
-
-    private BigDecimal defaultToZero(
-            BigDecimal amount
-    ) {
-        return amount == null
-                ? BigDecimal.ZERO
-                : amount;
-    }
 
     private void validateInvoiceDates(LocalDate invoiceDate, LocalDate dueDate) {
         if (invoiceDate == null) {

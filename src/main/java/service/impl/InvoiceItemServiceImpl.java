@@ -31,11 +31,14 @@ public class InvoiceItemServiceImpl implements InvoiceItemService {
 
     private final ProductRepository productRepository;
 
-    public InvoiceItemServiceImpl(InvoiceItemRepository invoiceItemRepository, InvoiceItemMapper invoiceItemMapper, InvoiceRepository invoiceRepository, ProductRepository productRepository) {
+    private final InvoiceCalculationService invoiceCalculationService;
+
+    public InvoiceItemServiceImpl(InvoiceItemRepository invoiceItemRepository, InvoiceItemMapper invoiceItemMapper, InvoiceRepository invoiceRepository, ProductRepository productRepository , InvoiceCalculationService invoiceCalculationService) {
         this.invoiceItemRepository = invoiceItemRepository;
         this.invoiceItemMapper = invoiceItemMapper;
         this.invoiceRepository = invoiceRepository;
         this.productRepository = productRepository;
+        this.invoiceCalculationService = invoiceCalculationService;
     }
 
     @Override
@@ -47,20 +50,20 @@ public class InvoiceItemServiceImpl implements InvoiceItemService {
 
         InvoiceItem invoiceItem =  invoiceItemMapper.toEntity(request);
 
-        invoiceItem.setInvoice(invoice);
-
         if(request.productId() != null) {
             Product product = findProductById(request.productId());
 
             invoiceItem.setProduct(product);
         }
 
+        invoice.addItem(invoiceItem);
+
         //calculate the line Item
-        calculateLineTotal(invoiceItem);
+        invoiceCalculationService.calculateLineTotal(invoiceItem);
+
+        invoiceCalculationService.recalculateInvoiceTotals(invoice);
 
         InvoiceItem savedInvoiceItem = invoiceItemRepository.save(invoiceItem);
-
-        recalculateInvoiceTotals(invoice);
 
         invoiceRepository.save(invoice);
 
@@ -104,12 +107,11 @@ public class InvoiceItemServiceImpl implements InvoiceItemService {
 
         invoiceItemMapper.updateEntityFromRequest(request, existingInvoiceItem);
 
-        calculateLineTotal(existingInvoiceItem);
+        invoiceCalculationService.calculateLineTotal(existingInvoiceItem);
+
+        invoiceCalculationService.recalculateInvoiceTotals(invoice);
 
         InvoiceItem updatedInvoiceItem = invoiceItemRepository.save(existingInvoiceItem);
-
-        recalculateInvoiceTotals(invoice);
-
         invoiceRepository.save(invoice);
 
         return invoiceItemMapper.toResponse(updatedInvoiceItem);
@@ -124,11 +126,9 @@ public class InvoiceItemServiceImpl implements InvoiceItemService {
 
         validateInvoiceCanBeModified(invoice);
 
-        invoiceItemRepository.delete(invoiceItem);
+        invoice.removeItem(invoiceItem);
 
-        invoice.getItems().remove(invoiceItem);
-
-        recalculateInvoiceTotals(invoice);
+        invoiceCalculationService.recalculateInvoiceTotals(invoice);
 
         invoiceRepository.save(invoice);
 
