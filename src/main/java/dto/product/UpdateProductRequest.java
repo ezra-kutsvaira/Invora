@@ -10,6 +10,9 @@ public record UpdateProductRequest(
         @PositiveOrZero(message = "Unit price cannot be negative")
         BigDecimal unitPrice,
 
-        Boolean active
+        Boolean active,
+
+        @PositiveOrZero(message = "Stock quantity cannot be negative")
+        Integer stockQuantity
 ) {
 }

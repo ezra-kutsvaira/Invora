@@ -13,6 +13,9 @@ public record CreateProductRequest(
 
         @NotNull(message = "Unit price is required")
         @PositiveOrZero(message = "Unit price cannot be negative")
-        BigDecimal unitPrice
+        BigDecimal unitPrice,
+
+        @PositiveOrZero(message = "Stock quantity cannot be negative ")
+        Integer stockQuantity
 ) {
 }
