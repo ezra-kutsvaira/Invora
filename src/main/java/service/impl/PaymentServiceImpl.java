@@ -32,7 +32,6 @@ public class PaymentServiceImpl implements PaymentService {
         this.invoiceCalculationService = invoiceCalculationService;
     }
 
-
     @Override
     public PaymentResponse recordPayment(Long invoiceId, CreatePaymentRequest request) {
 
@@ -48,7 +47,6 @@ public class PaymentServiceImpl implements PaymentService {
         return paymentMapper.toResponse(savedPayment);
     }
 
-
     @Override
     @Transactional(readOnly = true)
     public PaymentResponse getPaymentById(Long paymentId) {
@@ -57,7 +55,6 @@ public class PaymentServiceImpl implements PaymentService {
 
         return paymentMapper.toResponse(payment);
     }
-
 
     @Override
     @Transactional(readOnly = true)

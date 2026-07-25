@@ -17,5 +17,6 @@ public record CreateCurrencyRequest(
         @NotNull(message = "Exchange rate is required")
         @Positive(message = "Exchange rate must be greater than zero")
         BigDecimal exchangeRateToBase
+
 ) {
 }

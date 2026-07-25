@@ -38,6 +38,8 @@ public class Currency {
     @Column(nullable = false)
     private Boolean active = true;
 
+    private Boolean defaultCurrency;
+
     @Column(nullable = false, updatable = false)
     private LocalDateTime createdAt;
 
@@ -95,6 +97,11 @@ public class Currency {
         return updatedAt;
     }
 
+    public Boolean getDefaultCurrency() {
+        return defaultCurrency;
+    }
+
+
     //Setters
     public void setId(Long id) {
         this.id = id;
@@ -126,5 +133,9 @@ public class Currency {
 
     public void setUpdatedAt(LocalDateTime updatedAt) {
         this.updatedAt = updatedAt;
+    }
+
+    public void setDefaultCurrency(Boolean defaultCurrency) {
+        this.defaultCurrency = defaultCurrency;
     }
 }
