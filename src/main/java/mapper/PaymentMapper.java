@@ -1,9 +1,6 @@
 package mapper;
 
-import dto.payment.PaymentResponse;
-import dto.payment.PaymentSummaryResponse;
-import dto.payment.RecordPaymentRequest;
-import dto.payment.UpdatePaymentRequest;
+import dto.payment.*;
 import entity.Invoice;
 import entity.Payment;
 import org.mapstruct.*;
@@ -14,7 +11,7 @@ import java.util.List;
 public interface PaymentMapper {
 
     @Mapping(target = "invoice", source = "invoiceId")
-    Payment toEntity(RecordPaymentRequest request);
+    Payment toEntity(CreatePaymentRequest request);
 
     @Mapping(target = "invoiceId", source = "invoice.id")
     @Mapping(target = "invoiceNumber", source = "invoice.invoiceNumber")
