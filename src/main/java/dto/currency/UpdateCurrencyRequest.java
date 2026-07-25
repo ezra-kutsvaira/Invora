@@ -14,6 +14,8 @@ public record UpdateCurrencyRequest(
         @Positive(message = "Exchange rate must be greater than zero")
         BigDecimal exchangeRateToBase,
 
-        Boolean active
+        Boolean active,
+
+        Boolean defaultCurrency
 ) {
 }

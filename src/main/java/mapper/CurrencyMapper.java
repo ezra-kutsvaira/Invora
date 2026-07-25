@@ -19,4 +19,6 @@ public interface CurrencyMapper {
 
     @BeanMapping(nullValuePropertyMappingStrategy = NullValuePropertyMappingStrategy.IGNORE)
     void updateEntityFromRequest(UpdateCurrencyRequest request, @MappingTarget Currency currency);
+
+
 }
