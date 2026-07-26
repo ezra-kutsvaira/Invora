@@ -1,11 +1,13 @@
 package service.impl;
 
+import com.ezra_anotida.invoice_maker.exception.DuplicateResourceException;
+import com.ezra_anotida.invoice_maker.exception.InvalidRequestException;
+import com.ezra_anotida.invoice_maker.exception.ResourceNotFoundException;
 import dto.product.CreateProductRequest;
 import dto.product.ProductResponse;
 import dto.product.ProductSummaryResponse;
 import dto.product.UpdateProductRequest;
 import entity.Product;
-import jakarta.persistence.EntityNotFoundException;
 import mapper.ProductMapper;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -104,7 +106,7 @@ public class ProductServiceImpl implements ProductService {
     public List<ProductResponse> searchProducts(String keyword) {
 
         if(keyword == null || keyword.isBlank()){
-            throw new IllegalArgumentException("keyword cannot be empty");
+            throw new InvalidRequestException("Keyword cannot be empty");
 
         }
 
@@ -117,7 +119,7 @@ public class ProductServiceImpl implements ProductService {
 
         //Work on Null Pointers
         if(category == null || category.isBlank()){
-            throw new IllegalArgumentException("category cannot be empty");
+            throw new InvalidRequestException("Category cannot be empty");
         }
         List<Product> products = productRepository.findByNameContainingIgnoreCase(category.trim());
 
@@ -135,7 +137,7 @@ public class ProductServiceImpl implements ProductService {
     @Override
     public List<ProductResponse> getAllActiveProductsByCategory(String category) {
         if(category == null || category.isBlank()){
-            throw new IllegalArgumentException("category cannot be empty");
+            throw new InvalidRequestException("Category cannot be empty");
         }
         List<Product> products = productRepository.findByNameContainingIgnoreCase(category.trim());
 
@@ -145,11 +147,11 @@ public class ProductServiceImpl implements ProductService {
     //Helper Methods
     private Product findProductById(Long productId) {
         if(productId == null){
-            throw new IllegalArgumentException("Product ID cannot be null");
+            throw new InvalidRequestException("Product ID cannot be null");
         }
 
         return productRepository.findById(productId)
-                .orElseThrow(()-> new IllegalArgumentException("Product with Id" + productId + " cannot be found"));
+                .orElseThrow(() -> new ResourceNotFoundException("Product", "id", productId));
     }
 
     private void validateUniqueName (String name, Product existingProduct) {
@@ -160,24 +162,28 @@ public class ProductServiceImpl implements ProductService {
         boolean nameBelongsToCurrentProduct = existingProduct != null && existingProduct.getProductName() != null && existingProduct.getProductName().equals(name);
 
         if(!nameBelongsToCurrentProduct && productRepository.existByNameIgnoreCase(name)){
-            throw new IllegalArgumentException("A product with name " + name + "already exists");
+            throw new DuplicateResourceException("Product", "name", name);
         }
 
     }
 
     private void validatePrice(BigDecimal price){
         if(price == null){
-            throw  new IllegalArgumentException("Price cannot be null");
+            throw new InvalidRequestException("Price cannot be null");
         }
 
         if(price.compareTo(BigDecimal.ZERO) <= 0){
-            throw new IllegalArgumentException("Price cannot be negative");
+            throw new InvalidRequestException("Price must be greater than zero");
         }
     }
 
     private void validateStockQuantity(Integer stockQuantity){
+        if (stockQuantity == null) {
+            return;
+        }
+
         if(stockQuantity < 0){
-            throw new IllegalArgumentException("Stock quantity cannot be negative");
+            throw new InvalidRequestException("Stock quantity cannot be negative");
         }
     }
 

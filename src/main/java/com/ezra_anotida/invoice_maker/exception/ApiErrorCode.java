@@ -1,0 +1,12 @@
+package com.ezra_anotida.invoice_maker.exception;
+
+public enum ApiErrorCode {
+    RESOURCE_NOT_FOUND,
+    DUPLICATE_RESOURCE,
+    INVALID_REQUEST,
+    BUSINESS_RULE_VIOLATION,
+    INVALID_RESOURCE_STATE,
+    VALIDATION_FAILED,
+    DATA_INTEGRITY_VIOLATION,
+    INTERNAL_SERVER_ERROR
+}
