@@ -2,13 +2,12 @@
 
 # 🧾 Invora
 
-### Modern Invoice and Business Management System
+### Modern Open-Source Invoice Management System
 
-Invora is an open-source invoice management backend built with Java and Spring Boot.
+Invora helps businesses manage customers, products, invoices, payments, currencies, and company information from one platform.
 
 [![Java](https://img.shields.io/badge/Java-21-orange.svg)](https://www.oracle.com/java/)
 [![Spring Boot](https://img.shields.io/badge/Spring%20Boot-4.1.0-brightgreen.svg)](https://spring.io/projects/spring-boot)
-[![MapStruct](https://img.shields.io/badge/MapStruct-1.6.3-red.svg)](https://mapstruct.org/)
 [![Maven](https://img.shields.io/badge/Maven-3.9%2B-blue.svg)](https://maven.apache.org/)
 [![Status](https://img.shields.io/badge/Status-Active-success.svg)](#-project-status)
 
@@ -16,173 +15,52 @@ Invora is an open-source invoice management backend built with Java and Spring B
 
 ---
 
-## 📖 Table of Contents
+## 📖 Overview
 
-- [Overview](#-overview)
-- [Why Invora?](#-why-invora)
-- [Features](#-features)
-- [Project Status](#-project-status)
-- [Technology Stack](#-technology-stack)
-- [Architecture](#-architecture)
-- [Project Structure](#-project-structure)
-- [Domain Model](#-domain-model)
-- [Getting Started](#-getting-started)
-- [Configuration](#-configuration)
-- [Building and Testing](#-building-and-testing)
-- [Engineering Principles](#-engineering-principles)
-- [Git Workflow](#-git-workflow)
-- [Contributing](#-contributing)
-- [License](#-license)
-- [Author](#-author)
+Invora is a Java and Spring Boot backend for freelancers, startups, and small to medium-sized businesses. It provides a structured way to create invoices, record payments, manage business records, and calculate outstanding balances.
 
-## 🌍 Overview
-
-Invora is a Java and Spring Boot application that provides the backend foundation for managing invoices and everyday business records.
-
-It brings customers, products, currencies, invoices, invoice items, payments, company information, users, and audit records into one structured system. Invora applies clear service boundaries, validated DTOs, entity mapping, business-rule enforcement, and consistent API error handling.
-
-The project is designed for:
-
-- Freelancers
-- Startups
-- Small and medium-sized businesses
-- Accountants and bookkeepers
-- Developers learning production-focused Spring development
-
-## 💡 Why Invora?
-
-Small businesses need a simple way to manage customers, products, invoices, payments, and outstanding balances. Many existing systems are expensive, difficult to customise, or poorly suited to local business requirements.
-
-Invora provides:
-
-- A free and open-source invoicing foundation
-- A maintainable Java backend
-- Clear separation between business and persistence logic
-- Reliable monetary calculations with `BigDecimal`
-- Extensible modules for business and regulatory integrations
-- A practical codebase for learning enterprise Spring development
+The project focuses on clean code, reliable financial calculations, maintainable architecture, and support for Zimbabwean business requirements.
 
 ## ✨ Features
 
-### 👥 Customer Management
+### Core Business Features
 
-- Create customer records
-- Retrieve customers by ID
-- List all customers
-- Retrieve active customer summaries
-- Update customer information
-- Delete customers
-- Search customers by name
-- Prevent duplicate email addresses and phone numbers
+- 👥 Customer creation, updates, search, and duplicate validation
+- 📦 Product catalogue, pricing, categories, and stock management
+- 🧾 Invoice creation, issuing, cancellation, and status management
+- 🧮 Automatic subtotal, discount, tax, total, and balance calculations
+- 💳 Payment recording, updates, history, and invoice balance recalculation
+- 💱 Multi-currency management with a configurable default currency
+- 🏢 Company profile, tax, contact, and banking information
+- 📝 Audit records for business activity
+- 🛡️ Centralised validation and API exception handling
 
-### 📦 Product Management
+### Platform Features
 
-- Create and update products
-- Retrieve individual products
-- List products
-- Retrieve active product summaries
-- Search products
-- Filter products by category
-- Validate product prices and stock quantities
-- Prevent duplicate product names
-
-### 💱 Currency Management
-
-- Create and update currencies
-- Retrieve currencies by ID or code
-- List supported currencies
-- Normalise currency codes
-- Configure the default currency
-- Prevent multiple default currencies
-- Prevent deletion of the default currency
-- Prevent inactive currencies from becoming the default
-
-### 🧮 Invoice Calculations
-
-- Calculate invoice-item line totals
-- Calculate invoice subtotals
-- Apply discounts and taxes
-- Calculate invoice totals
-- Track amounts paid
-- Calculate outstanding balances
-- Prevent negative balances
-- Prevent discounts from exceeding the subtotal
-- Validate quantities and unit prices
-
-### 🧾 Invoice Management
-
-The invoice service defines operations for:
-
-- Creating invoices
-- Retrieving invoices by ID or invoice number
-- Listing invoices and invoice summaries
-- Retrieving invoices by customer
-- Updating invoices
-- Issuing invoices
-- Cancelling invoices
-- Deleting invoices
-
-### 💳 Payment Management
-
-- Record payments against invoices
-- Retrieve individual payments
-- List all payments
-- Retrieve payments by invoice
-- Update and delete payments
-- Validate positive payment amounts
-- Recalculate invoice totals after payment deletion
-
-### 🏢 Company Profiles
-
-- Create the active company profile
-- Retrieve and update the active company profile
-- Prevent multiple active company profiles
-- Store company contact information
-- Store addresses and tax information
-- Store banking details
-- Maintain company information used by invoices
-
-### 🛡️ Error Handling
-
-- Custom application exception hierarchy
-- Resource-not-found errors
-- Duplicate-resource errors
-- Invalid-request errors
-- Invalid-resource-state errors
-- Business-rule errors
-- Structured API error responses
-- Centralised exception handling
-
-### 📝 Audit Records
-
-- Represent system activity through audit-log entities and response DTOs
-- Provide traceability for important business operations
+- 🔐 JWT authentication and role-based access control
+- 📚 Swagger/OpenAPI documentation
+- 🐳 Docker-based application and database setup
+- 🇿🇼 ZIMRA fiscalisation and tax integration
+- 📄 Invoice PDF generation
+- ✉️ Invoice delivery by email
+- 📊 Business reports and analytics
 
 ## 🚦 Project Status
 
-Invora is an active backend project. The current codebase contains the domain model, DTOs, repositories, MapStruct mappers, service contracts, exception handling, and service implementations for customers, products, currencies, and invoice calculations.
+Invora is actively developed. Its core domain model and major business services are implemented, while the API and integration layers are being expanded.
 
 | Area | Status |
 | --- | --- |
-| JPA entities | ✅ Implemented |
-| Request and response DTOs | ✅ Implemented |
-| Spring Data repositories | ✅ Implemented |
-| MapStruct mappers | ✅ Implemented |
-| Service contracts | ✅ Implemented |
-| Customer service | ✅ Implemented |
-| Product service | ✅ Implemented |
-| Currency service | ✅ Implemented |
-| Company profile service | ✅ Implemented |
-| Invoice service | ✅ Implemented |
-| Invoice calculation service | ✅ Implemented |
-| Payment service | ✅ Implemented |
+| Entities, DTOs, repositories, and mappers | ✅ Implemented |
+| Customer, product, currency, invoice, payment, and company services | ✅ Implemented |
+| Invoice calculations and business rules | ✅ Implemented |
 | Global exception handling | ✅ Implemented |
-| Remaining service implementations | 🚧 In development |
 | REST controllers | 🚧 In development |
-| Authentication and authorisation | 🚧 In development |
-| API documentation | 🚧 In development |
-| PDF and email delivery | 🚧 In development |
-| ZIMRA fiscalisation | 🚧 In development |
+| JWT security | 🚧 In development |
+| Swagger/OpenAPI | 🚧 In development |
+| Docker | 🚧 In development |
+| ZIMRA integration | 🚧 In development |
+| PDF, email, and reports | 🚧 In development |
 
 ## 🧰 Technology Stack
 
@@ -192,17 +70,13 @@ Invora is an active backend project. The current codebase contains the domain mo
 | Framework | Spring Boot 4.1.0 |
 | Web | Spring Web MVC |
 | Persistence | Spring Data JPA and Hibernate |
-| Database driver | MySQL Connector/J |
+| Database | MySQL |
+| Mapping | MapStruct 1.6.3 |
 | Validation | Jakarta Bean Validation |
-| Object mapping | MapStruct 1.6.3 |
-| Security foundation | Spring Security |
-| Server-side templates | Thymeleaf |
-| Email foundation | Spring Mail |
-| Build tool | Apache Maven |
-| Testing | Spring Boot test starters |
-| Version control | Git and GitHub |
-
-> The Maven compiler currently targets Java 17 bytecode while the project property specifies Java 21. Use JDK 21 to match the project configuration.
+| Security | Spring Security and JWT |
+| Documentation | Swagger/OpenAPI |
+| Containerisation | Docker |
+| Build | Maven |
 
 ## 🏗️ Architecture
 
@@ -210,108 +84,61 @@ Invora follows a layered architecture:
 
 ```mermaid
 flowchart TD
-    Client["Client / UI"] --> Controller["Controller Layer"]
-    Controller --> DTO["Request & Response DTOs"]
-    Controller --> Service["Service Layer"]
-    Service --> Mapper["MapStruct Mappers"]
-    Service --> Repository["Repository Layer"]
-    Mapper --> Entity["JPA Entities"]
-    Repository --> Entity
-    Repository --> Database[("MySQL Database")]
+    Client["Client"] --> Controller["Controller"]
+    Controller --> Service["Service"]
+    Service --> Mapper["Mapper"]
+    Service --> Repository["Repository"]
+    Mapper --> Entity["Entity"]
+    Repository --> Database[("MySQL")]
 ```
 
-### Layer Responsibilities
-
-| Layer | Responsibility |
-| --- | --- |
-| Controller | Receives HTTP requests and returns responses |
-| DTO | Defines validated input and safe output models |
-| Service | Coordinates use cases and enforces business rules |
-| Mapper | Converts between entities and DTOs |
-| Repository | Provides database access through Spring Data JPA |
-| Entity | Models persisted business data |
-| Exception | Produces consistent business and API errors |
+- **Controllers** handle HTTP requests and responses.
+- **Services** contain workflows and business rules.
+- **Repositories** manage database access.
+- **DTOs** define validated requests and safe responses.
+- **Mappers** convert between DTOs and entities.
+- **Exceptions** provide consistent API errors.
 
 ## 📁 Project Structure
 
 ```text
-src/
-├── main/
-│   ├── java/
-│   │   ├── com/ezra_anotida/invoice_maker/
-│   │   │   └── exception/       # Exception hierarchy and API error handling
-│   │   ├── dto/                 # Request and response records
-│   │   ├── entity/              # JPA entities
-│   │   ├── enums/               # Domain status values
-│   │   ├── mapper/              # MapStruct mappings
-│   │   ├── repository/          # Spring Data JPA repositories
-│   │   ├── service/             # Service contracts
-│   │   └── service/impl/        # Service implementations
-│   └── resources/
-│       └── application.properties
-└── test/
-    └── java/                    # Automated tests
-```
-
-## 🗃️ Domain Model
-
-| Entity | Responsibility |
-| --- | --- |
-| `User` | Represents a system user |
-| `CompanyProfile` | Stores company, tax, contact, and banking information |
-| `Customer` | Stores customer identity and contact information |
-| `Product` | Represents a product or service that can be invoiced |
-| `Invoice` | Stores invoice dates, totals, status, customer, and payment information |
-| `InvoiceItem` | Represents a single invoice line |
-| `Payment` | Records money received against an invoice |
-| `Currency` | Defines a supported transaction currency |
-| `AuditLog` | Records important system activity |
-
-### Entity Relationships
-
-```mermaid
-erDiagram
-    CUSTOMER ||--o{ INVOICE : receives
-    INVOICE ||--|{ INVOICE_ITEM : contains
-    INVOICE ||--o{ PAYMENT : receives
-    PRODUCT ||--o{ INVOICE_ITEM : references
+src/main/java/
+├── controller/        # REST controllers
+├── dto/               # Request and response records
+├── entity/            # JPA entities
+├── enums/             # Domain status values
+├── exception/         # Custom exceptions and error handling
+├── mapper/            # MapStruct mappings
+├── repository/        # Spring Data repositories
+├── service/           # Service contracts
+└── service/impl/      # Business logic
 ```
 
 ## 🚀 Getting Started
 
-### Prerequisites
-
-Install:
+### Requirements
 
 - JDK 21
-- Maven 3.9 or newer
-- MySQL 8 or newer
+- Maven 3.9+
+- MySQL 8+
 - Git
 
-Verify the tools:
-
-```bash
-java -version
-mvn -version
-git --version
-```
-
-### Clone the Repository
+### 1. Clone the Repository
 
 ```bash
 git clone https://github.com/ezra-kutsvaira/Invora.git
 cd Invora
 ```
 
-### Create the Database
+### 2. Create the Database
 
 ```sql
 CREATE DATABASE invora_db;
 ```
 
-### Configure the Database
+### 3. Configure the Application
 
-Add the datasource configuration to `src/main/resources/application.properties`:
+Add the database settings to `src/main/resources/application.properties`:
 
 ```properties
 spring.application.name=invoice-maker
@@ -322,150 +149,103 @@ spring.datasource.password=${DATABASE_PASSWORD}
 
 spring.jpa.hibernate.ddl-auto=update
 spring.jpa.open-in-view=false
-spring.jpa.show-sql=false
 ```
 
-Set `DATABASE_PASSWORD` before starting the application. Do not commit real credentials.
+Set `DATABASE_PASSWORD` locally. Never commit credentials.
 
-### Run Invora
+### 4. Run Invora
 
 ```bash
 mvn spring-boot:run
 ```
 
-## ⚙️ Configuration
-
-The repository currently defines:
-
-```properties
-spring.application.name=invoice-maker
-```
-
-Database connection settings must be supplied before running against MySQL.
-
-| Variable | Purpose | Example |
-| --- | --- | --- |
-| `DATABASE_URL` | JDBC connection URL | `jdbc:mysql://localhost:3306/invora_db` |
-| `DATABASE_USERNAME` | MySQL username | `root` |
-| `DATABASE_PASSWORD` | MySQL password | Set locally |
-
-## 🧪 Building and Testing
-
-### Build
+## 🧪 Build and Test
 
 ```bash
+# Build the project
 mvn clean package
-```
 
-### Run Tests
-
-```bash
+# Run the tests
 mvn test
-```
 
-### Run Verification
-
-```bash
+# Run all verification checks
 mvn verify
 ```
 
-### Run the Packaged Application
+## 📚 API Documentation
 
-```bash
-java -jar target/invoice-maker-0.0.1-SNAPSHOT.jar
+Swagger UI provides interactive documentation for Invora's REST API:
+
+```text
+http://localhost:8080/swagger-ui/index.html
 ```
 
-## 📐 Engineering Principles
+The OpenAPI specification is exposed at:
 
-Invora applies:
+```text
+http://localhost:8080/v3/api-docs
+```
 
-- SOLID principles
-- Separation of concerns
-- Constructor-based dependency injection
-- Transaction boundaries in the service layer
-- DTOs instead of exposing JPA entities
-- MapStruct for consistent object mapping
-- Jakarta Bean Validation
-- Centralised exception handling
-- `BigDecimal` for monetary values
-- Repository abstractions for persistence
-- Helper methods for reusable validation and lookup logic
-- Normalisation of business data such as currency codes
+These endpoints become available when the Swagger/OpenAPI integration is enabled.
+
+## 🔐 Security
+
+Invora uses Spring Security as its security foundation. JWT authentication provides stateless user sessions, while role-based access control protects business operations.
+
+Security includes:
+
+- Password hashing
+- JWT validation
+- Role-based permissions
+- Request validation
+- Centralised error handling
+- Environment-based secret configuration
+
+## 🐳 Docker
+
+Docker provides a consistent environment for Invora and MySQL. The container setup supports local development without requiring a separately installed database.
+
+The Docker configuration is maintained alongside the application as the deployment layer is completed.
+
+## 🇿🇼 ZIMRA Integration
+
+Invora includes ZIMRA fiscalisation in its product scope to support Zimbabwean tax requirements. The integration covers fiscal invoice submission, tax data exchange, receipt verification, and compliant invoice records.
+
+ZIMRA credentials and API settings must be supplied securely through environment variables.
 
 ## 🌿 Git Workflow
 
-| Branch | Purpose |
-| --- | --- |
-| `main` | Stable and reviewed code |
-| `development` | Integration branch |
-| `feature/*` | Feature development |
-| `fix/*` | Bug fixes |
-| `docs/*` | Documentation changes |
-
-Create a branch from `development`:
-
-```bash
-git switch development
-git pull origin development
-git switch -c feature/your-feature
+```text
+main          Stable code
+development   Integration branch
+feature/*     Feature development
+fix/*         Bug fixes
+docs/*        Documentation
 ```
 
-Commit and push:
-
-```bash
-git add .
-git commit -m "Add your feature"
-git push -u origin feature/your-feature
-```
-
-Open a pull request into `development`. Changes are reviewed and tested before being merged into `main`.
+Create work from `development` and open a pull request back into `development`.
 
 ## 🤝 Contributing
 
-Contributions, suggestions, and bug reports are welcome.
-
 1. Fork the repository.
-2. Create a branch from `development`.
-3. Make one focused change.
-4. Add or update tests.
-5. Run `mvn verify`.
-6. Commit with a clear message.
-7. Push the branch.
-8. Open a pull request into `development`.
+2. Create a feature branch.
+3. Make and test your changes.
+4. Run `mvn verify`.
+5. Push the branch.
+6. Open a pull request into `development`.
 
-Before submitting:
-
-- Follow the existing package and naming conventions.
-- Keep business logic in the service layer.
-- Use DTOs at API boundaries.
-- Add validation for new request data.
-- Use constructor injection.
-- Do not commit credentials or IDE-specific files.
-- Update the README when behaviour or setup changes.
+Follow the existing naming conventions, use constructor injection, keep business logic in services, and never commit credentials.
 
 ## 📄 License
 
-No licence file is currently included in the repository. Add a `LICENSE` file before distributing Invora as an open-source project. The MIT License is a suitable choice for broad reuse and contribution.
+Invora is prepared for release under the MIT License. A `LICENSE` file will define the final distribution terms.
 
 ## 👨‍💻 Author
 
-**Ezra Kutsvaira**
-
+**Ezra Kutsvaira**  
 Java Backend Developer focused on Spring Boot, fintech, and business systems.
 
-- GitHub: [@ezra-kutsvaira](https://github.com/ezra-kutsvaira)
-
-## 🙏 Acknowledgements
-
-Invora uses technologies from:
-
-- [Java](https://www.java.com/)
-- [Spring Boot](https://spring.io/projects/spring-boot)
-- [Spring Data JPA](https://spring.io/projects/spring-data-jpa)
-- [Hibernate ORM](https://hibernate.org/orm/)
-- [MapStruct](https://mapstruct.org/)
-- [Apache Maven](https://maven.apache.org/)
-- [MySQL](https://www.mysql.com/)
+[GitHub](https://github.com/ezra-kutsvaira)
 
 ---
 
@@ -473,6 +253,6 @@ Invora uses technologies from:
 
 ### ⭐ Support Invora
 
-If Invora is useful to you, star the repository, report an issue, or contribute an improvement.
+Star the repository, report an issue, or contribute an improvement.
 
 </div>
