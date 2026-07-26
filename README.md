@@ -82,16 +82,6 @@ Invora is actively developed. Its core domain model and major business services 
 
 Invora follows a layered architecture:
 
-```mermaid
-flowchart TD
-    Client["Client"] --> Controller["Controller"]
-    Controller --> Service["Service"]
-    Service --> Mapper["Mapper"]
-    Service --> Repository["Repository"]
-    Mapper --> Entity["Entity"]
-    Repository --> Database[("MySQL")]
-```
-
 - **Controllers** handle HTTP requests and responses.
 - **Services** contain workflows and business rules.
 - **Repositories** manage database access.
