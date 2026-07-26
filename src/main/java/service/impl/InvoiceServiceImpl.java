@@ -1,5 +1,9 @@
 package service.impl;
 
+import com.ezra_anotida.invoice_maker.exception.BusinessRuleException;
+import com.ezra_anotida.invoice_maker.exception.InvalidRequestException;
+import com.ezra_anotida.invoice_maker.exception.InvalidResourceStateException;
+import com.ezra_anotida.invoice_maker.exception.ResourceNotFoundException;
 import dto.invoice.CreateInvoiceRequest;
 import dto.invoice.InvoiceResponse;
 import dto.invoice.InvoiceSummaryResponse;
@@ -8,7 +12,6 @@ import entity.Customer;
 import entity.Invoice;
 import entity.InvoiceItem;
 import enums.InvoiceStatus;
-import jakarta.persistence.EntityNotFoundException;
 import mapper.InvoiceMapper;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -72,11 +75,11 @@ public class InvoiceServiceImpl implements InvoiceService {
     @Transactional(readOnly = true)
     public InvoiceResponse getInvoiceByInvoiceNumber(String invoiceNumber) {
         if (invoiceNumber == null || invoiceNumber.isBlank()) {
-            throw new IllegalArgumentException("Invoice number cannot be empty");
+            throw new InvalidRequestException("Invoice number cannot be empty");
         }
 
         Invoice invoice = invoiceRepository.findByInvoiceNumber(invoiceNumber.trim())
-                .orElseThrow(() -> new EntityNotFoundException("Invoice with number " + invoiceNumber + " was not found"));
+                .orElseThrow(() -> new ResourceNotFoundException("Invoice", "number", invoiceNumber.trim()));
 
         return invoiceMapper.toResponse(invoice);
     }
@@ -146,12 +149,12 @@ public class InvoiceServiceImpl implements InvoiceService {
         Invoice invoice = findInvoiceById(invoiceId);
 
         if (invoice.getStatus() != InvoiceStatus.DRAFT) {
-            throw new IllegalStateException("Only draft invoices can be issued");
+            throw new InvalidResourceStateException("Only draft invoices can be issued");
         }
 
         if (invoice.getItems() == null || invoice.getItems().isEmpty()) {
 
-            throw new IllegalStateException("An invoice must contain at least one item");
+            throw new BusinessRuleException("An invoice must contain at least one item");
         }
 
         invoiceCalculationService.recalculateInvoiceTotals(invoice);
@@ -169,17 +172,16 @@ public class InvoiceServiceImpl implements InvoiceService {
         Invoice invoice = findInvoiceById(invoiceId);
 
         if (invoice.getStatus() == InvoiceStatus.CANCELLED) {
-            throw new IllegalStateException("Invoice is already cancelled");
+            throw new InvalidResourceStateException("Invoice is already cancelled");
         }
 
         if (invoice.getStatus() == InvoiceStatus.PAID) {
-            throw new IllegalStateException("A paid invoice cannot be cancelled"
-            );
+            throw new InvalidResourceStateException("A paid invoice cannot be cancelled");
         }
 
         if (invoice.getAmountPaid() != null && invoice.getAmountPaid().compareTo(BigDecimal.ZERO) > 0) {
 
-            throw new IllegalStateException("An invoice with recorded payments cannot be cancelled");
+            throw new InvalidResourceStateException("An invoice with recorded payments cannot be cancelled");
         }
 
         invoice.setStatus(InvoiceStatus.CANCELLED);
@@ -195,7 +197,7 @@ public class InvoiceServiceImpl implements InvoiceService {
         Invoice invoice = findInvoiceById(invoiceId);
 
         if (invoice.getStatus() != InvoiceStatus.DRAFT) {
-            throw new IllegalStateException("Only draft invoices can be deleted");
+            throw new InvalidResourceStateException("Only draft invoices can be deleted");
         }
 
         invoiceRepository.delete(invoice);
@@ -204,21 +206,21 @@ public class InvoiceServiceImpl implements InvoiceService {
     private Invoice findInvoiceById(Long invoiceId) {
 
         if (invoiceId == null) {
-            throw new IllegalArgumentException("Invoice ID cannot be null");
+            throw new InvalidRequestException("Invoice ID cannot be null");
         }
 
         return invoiceRepository.findById(invoiceId)
-                .orElseThrow(() -> new EntityNotFoundException("Invoice with ID " + invoiceId + " was not found"));
+                .orElseThrow(() -> new ResourceNotFoundException("Invoice", "id", invoiceId));
     }
 
     private Customer findCustomerById(Long customerId) {
 
         if (customerId == null) {
-            throw new IllegalArgumentException("Customer ID cannot be null");
+            throw new InvalidRequestException("Customer ID cannot be null");
         }
 
         return customerRepository.findById(customerId)
-                .orElseThrow(() -> new EntityNotFoundException("Customer with ID " + customerId + " was not found"));
+                .orElseThrow(() -> new ResourceNotFoundException("Customer", "id", customerId));
     }
 
     private String generateInvoiceNumber() {
@@ -253,29 +255,27 @@ public class InvoiceServiceImpl implements InvoiceService {
 
     private void validateInvoiceDates(LocalDate invoiceDate, LocalDate dueDate) {
         if (invoiceDate == null) {
-            throw new IllegalArgumentException("Invoice date is required");
+            throw new InvalidRequestException("Invoice date is required");
         }
 
-        if (dueDate == null) {throw new IllegalArgumentException(
-                    "Due date is required"
-            );
+        if (dueDate == null) {
+            throw new InvalidRequestException("Due date is required");
         }
 
-        if (dueDate.isBefore(invoiceDate)) {throw new IllegalArgumentException(
-                    "Due date cannot be before invoice date"
-            );
+        if (dueDate.isBefore(invoiceDate)) {
+            throw new InvalidRequestException("Due date cannot be before invoice date");
         }
     }
 
     private void validateInvoiceCanBeUpdated(Invoice invoice) {
         if (invoice.getStatus() == InvoiceStatus.CANCELLED) {
-            throw new IllegalStateException(
+            throw new InvalidResourceStateException(
                     "A cancelled invoice cannot be updated"
             );
         }
 
         if (invoice.getStatus() == InvoiceStatus.PAID) {
-            throw new IllegalStateException("A paid invoice cannot be updated");
+            throw new InvalidResourceStateException("A paid invoice cannot be updated");
         }
     }
 }

@@ -1,10 +1,11 @@
 package service.impl;
 
+import com.ezra_anotida.invoice_maker.exception.DuplicateResourceException;
+import com.ezra_anotida.invoice_maker.exception.ResourceNotFoundException;
 import dto.company.CompanyProfileResponse;
 import dto.company.CreateCompanyProfileRequest;
 import dto.company.UpdateCompanyProfileRequest;
 import entity.CompanyProfile;
-import jakarta.persistence.EntityNotFoundException;
 import mapper.CompanyProfileMapper;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -64,13 +65,13 @@ public class CompanyProfileServiceImpl implements CompanyProfileService {
 
     private CompanyProfile findActiveCompanyProfile() {
         return companyProfileRepository.findByActiveTrue()
-                .orElseThrow(() -> new EntityNotFoundException("Active company profile not found"));
+                .orElseThrow(() -> new ResourceNotFoundException("Active company profile was not found"));
 
     }
 
     private void validateCompanyProfileDoesNotExist(){
         if(companyProfileRepository.findByActiveTrue().isPresent()){
-            throw new IllegalArgumentException("Active Company profile already exists");
+            throw new DuplicateResourceException("An active company profile already exists");
         }
     }
 }

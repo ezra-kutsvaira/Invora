@@ -1,10 +1,13 @@
 package service.impl;
 
+import com.ezra_anotida.invoice_maker.exception.DuplicateResourceException;
+import com.ezra_anotida.invoice_maker.exception.InvalidRequestException;
+import com.ezra_anotida.invoice_maker.exception.InvalidResourceStateException;
+import com.ezra_anotida.invoice_maker.exception.ResourceNotFoundException;
 import dto.currency.CreateCurrencyRequest;
 import dto.currency.CurrencyResponse;
 import dto.currency.UpdateCurrencyRequest;
 import entity.Currency;
-import jakarta.persistence.EntityNotFoundException;
 import jakarta.transaction.Transactional;
 import mapper.CurrencyMapper;
 import org.springframework.stereotype.Service;
@@ -73,7 +76,7 @@ public class CurrencyServiceImpl implements CurrencyService {
 
         Currency currency = currencyRepository
                 .findByDefaultCurrencyTrue()
-                .orElseThrow(() -> new EntityNotFoundException("No default currency has been configured"));
+                .orElseThrow(() -> new ResourceNotFoundException("No default currency has been configured"));
 
         return currencyMapper.toResponse(currency);
     }
@@ -121,7 +124,7 @@ public class CurrencyServiceImpl implements CurrencyService {
         Currency currency = findCurrencyById(currencyId);
 
         if (!Boolean.TRUE.equals(currency.getActive())) {
-            throw new IllegalArgumentException("An inactive currency cannot be set as default");
+            throw new InvalidResourceStateException("An inactive currency cannot be set as default");
         }
 
         if (Boolean.TRUE.equals(currency.getDefaultCurrency())) {
@@ -143,7 +146,7 @@ public class CurrencyServiceImpl implements CurrencyService {
         Currency currency = findCurrencyById(currencyId);
 
         if(Boolean.TRUE.equals(currency.getDefaultCurrency())){
-            throw new IllegalArgumentException("The default currency cannot be deleted");
+            throw new InvalidResourceStateException("The default currency cannot be deleted");
         }
 
         currencyRepository.delete(currency);
@@ -153,11 +156,11 @@ public class CurrencyServiceImpl implements CurrencyService {
     private Currency findCurrencyById(Long currencyId) {
 
         if(currencyId == null){
-            throw new IllegalArgumentException("Currency Id cannot be null");
+            throw new InvalidRequestException("Currency ID cannot be null");
         }
 
         return currencyRepository.findById(currencyId)
-                .orElseThrow(()-> new EntityNotFoundException("Entity with id" + currencyId + "not found"));
+                .orElseThrow(() -> new ResourceNotFoundException("Currency", "id", currencyId));
     }
 
 
@@ -172,7 +175,7 @@ public class CurrencyServiceImpl implements CurrencyService {
         boolean codeBelongsToCurrency = existingCurrency != null && existingCurrency.getCode() != null && existingCurrency.getCode().equalsIgnoreCase(normalizedCode);
 
         if(!codeBelongsToCurrency &&  currencyRepository.existsByCodeIgnoreCase(normalizedCode)){
-            throw new IllegalArgumentException("A currency with code " + normalizedCode + "already exists");
+            throw new DuplicateResourceException("Currency", "code", normalizedCode);
         }
 
     }
@@ -180,13 +183,13 @@ public class CurrencyServiceImpl implements CurrencyService {
     private Currency findCurrencyByCode(String currencyCode) {
 
         if (currencyCode == null || currencyCode.isBlank()){
-            throw new IllegalArgumentException("Currency Code Cannot Be Empty");
+            throw new InvalidRequestException("Currency code cannot be empty");
         }
 
         String normalizedCode = currencyCode.trim().toUpperCase();
 
         return currencyRepository.findByCodeIgnoreCase(normalizedCode)
-                .orElseThrow(() -> new EntityNotFoundException("Currency with code " + normalizedCode + "was not found"));
+                .orElseThrow(() -> new ResourceNotFoundException("Currency", "code", normalizedCode));
     }
 
     private void removeCurrentDefaultCurrency() {

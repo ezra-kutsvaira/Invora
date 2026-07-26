@@ -1,11 +1,13 @@
 package service.impl;
 
+import com.ezra_anotida.invoice_maker.exception.DuplicateResourceException;
+import com.ezra_anotida.invoice_maker.exception.InvalidRequestException;
+import com.ezra_anotida.invoice_maker.exception.ResourceNotFoundException;
 import dto.customer.CreateCustomerRequest;
 import dto.customer.CustomerResponse;
 import dto.customer.CustomerSummaryResponse;
 import dto.customer.UpdateCustomerRequest;
 import entity.Customer;
-import jakarta.persistence.EntityNotFoundException;
 import mapper.CustomerMapper;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -43,8 +45,7 @@ public class CustomerServiceImpl implements CustomerService {
     @Override
     @Transactional(readOnly = true)
     public CustomerResponse getCustomerById(Long customerId) {
-        Customer customer = customerRepository.findById(customerId)
-                .orElseThrow(() -> new EntityNotFoundException("Customer not found "));
+        Customer customer = findCustomerById(customerId);
 
         return customerMapper.toResponse(customer);
     }
@@ -95,10 +96,10 @@ public class CustomerServiceImpl implements CustomerService {
 
     private Customer findCustomerById(Long customerId) {
         if(customerId == null){
-            throw new IllegalArgumentException("Customer id is null");
+            throw new InvalidRequestException("Customer ID cannot be null");
         }
         return customerRepository.findById(customerId)
-                .orElseThrow(() -> new EntityNotFoundException("Customer with ID " + customerId + " not found"));
+                .orElseThrow(() -> new ResourceNotFoundException("Customer", "id", customerId));
     }
 
     //Email Validation
@@ -110,8 +111,7 @@ public class CustomerServiceImpl implements CustomerService {
         boolean emailBelongsToCurrentCustomer = existingCustomer != null && existingCustomer.getEmail() != null && existingCustomer.getEmail().equalsIgnoreCase(email);
         if (!emailBelongsToCurrentCustomer && customerRepository.existsByEmail(email)) {
 
-            throw new IllegalArgumentException("A customer with email " + email + " already exists"
-            );
+            throw new DuplicateResourceException("Customer", "email", email);
         }
     }
 
@@ -123,8 +123,7 @@ public class CustomerServiceImpl implements CustomerService {
 
         if (!phoneBelongsToCurrentCustomer && customerRepository.existsByPhoneNumber(phone)) {
 
-            throw new IllegalArgumentException("A customer with phone number " + phone + " already exists"
-            );
+            throw new DuplicateResourceException("Customer", "phone number", phone);
         }
     }
 }

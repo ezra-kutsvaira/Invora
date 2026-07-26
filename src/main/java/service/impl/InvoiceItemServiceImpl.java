@@ -1,5 +1,8 @@
 package service.impl;
 
+import com.ezra_anotida.invoice_maker.exception.InvalidRequestException;
+import com.ezra_anotida.invoice_maker.exception.InvalidResourceStateException;
+import com.ezra_anotida.invoice_maker.exception.ResourceNotFoundException;
 import dto.invoiceitem.CreateInvoiceItemRequest;
 import dto.invoiceitem.InvoiceItemResponse;
 import dto.invoiceitem.UpdateInvoiceItemRequest;
@@ -7,7 +10,6 @@ import entity.Invoice;
 import entity.InvoiceItem;
 import entity.Product;
 import enums.InvoiceStatus;
-import jakarta.persistence.EntityNotFoundException;
 import mapper.InvoiceItemMapper;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -16,7 +18,6 @@ import repository.InvoiceRepository;
 import repository.ProductRepository;
 import service.InvoiceItemService;
 
-import java.math.BigDecimal;
 import java.util.List;
 
 @Service
@@ -136,116 +137,39 @@ public class InvoiceItemServiceImpl implements InvoiceItemService {
 
     private InvoiceItem findInvoiceItemById(Long invoiceItemId){
         if(invoiceItemId == null){
-            throw new IllegalArgumentException("Invoice Item ID cannot be null");
+            throw new InvalidRequestException("Invoice item ID cannot be null");
         }
 
         return invoiceItemRepository.findById(invoiceItemId)
-                .orElseThrow(() -> new EntityNotFoundException("Invoice item with ID" + invoiceItemId + " not found"));
+                .orElseThrow(() -> new ResourceNotFoundException("Invoice item", "id", invoiceItemId));
 
     }
 
     private Invoice findInvoiceById(Long invoiceId) {
         if(invoiceId == null){
-            throw new IllegalArgumentException("Invoice ID cannot be null");
+            throw new InvalidRequestException("Invoice ID cannot be null");
         }
 
         return invoiceRepository.findById(invoiceId)
-                .orElseThrow(() -> new EntityNotFoundException("Invoice with ID" + invoiceId + " not found"));
+                .orElseThrow(() -> new ResourceNotFoundException("Invoice", "id", invoiceId));
     }
 
     private Product findProductById(Long productId) {
 
         if(productId == null){
-            throw new IllegalArgumentException("Product ID cannot be null");
+            throw new InvalidRequestException("Product ID cannot be null");
         }
 
         return productRepository.findById(productId)
-                .orElseThrow(() -> new EntityNotFoundException("Product with ID" + productId + " not found"));
+                .orElseThrow(() -> new ResourceNotFoundException("Product", "id", productId));
 
     }
 
     private void validateInvoiceCanBeModified(Invoice invoice) {
 
         if(invoice.getStatus() != InvoiceStatus.DRAFT){
-            throw new IllegalArgumentException("Invoice can only be modified only if the Invoice is in DRAFT Status");
+            throw new InvalidResourceStateException("Only draft invoices can be modified");
         }
-    }
-
-    private void calculateLineTotal(InvoiceItem invoiceItem){
-
-        if(invoiceItem.getQuantity() == null){
-            throw new IllegalArgumentException("Invoice quantity cannot be null");
-        }
-
-        if (invoiceItem.getUnitPrice() == null) {
-            throw new IllegalArgumentException("Invoice item unit price is required"
-            );
-        }
-
-        if (invoiceItem.getQuantity() <= 0) {
-            throw new IllegalArgumentException("Invoice item quantity must be greater than zero"
-            );
-        }
-
-        if (invoiceItem.getUnitPrice().compareTo(BigDecimal.ZERO) <= 0) {
-            throw new IllegalArgumentException("Invoice item unit price must be greater than zero"
-            );
-        }
-
-        BigDecimal lineTotal = invoiceItem.getUnitPrice()
-                .multiply(BigDecimal.valueOf(invoiceItem.getQuantity()));
-
-        invoiceItem.setLineTotal(lineTotal);
-    }
-
-
-    private void recalculateInvoiceTotals(Invoice invoice) {
-
-        BigDecimal subtotal = invoice.getItems()
-                .stream()
-                .map(item -> {calculateLineTotal(item);
-                    return item.getLineTotal();
-                })
-                .reduce(
-                        BigDecimal.ZERO,
-                        BigDecimal::add
-                );
-
-        BigDecimal discountAmount = defaultToZero(invoice.getDiscountAmount());
-
-        BigDecimal taxAmount = defaultToZero(invoice.getTaxAmount());
-
-        BigDecimal amountPaid = defaultToZero(invoice.getAmountPaid());
-
-        if (discountAmount.compareTo(subtotal) > 0) {
-            throw new IllegalArgumentException("Discount amount cannot exceed the invoice subtotal");
-        }
-
-        BigDecimal totalAmount = subtotal
-                .subtract(discountAmount)
-                .add(taxAmount);
-
-        BigDecimal balanceDue =
-                totalAmount.subtract(amountPaid);
-
-        if (balanceDue.compareTo(BigDecimal.ZERO) < 0) {
-            balanceDue = BigDecimal.ZERO;
-        }
-
-        invoice.setSubtotal(subtotal);
-        invoice.setDiscountAmount(discountAmount);
-        invoice.setTaxAmount(taxAmount);
-        invoice.setTotalAmount(totalAmount);
-        invoice.setAmountPaid(amountPaid);
-        invoice.setBalanceDue(balanceDue);
-    }
-
-    private BigDecimal defaultToZero(
-            BigDecimal amount
-    ) {
-        return amount == null
-                ? BigDecimal.ZERO
-                : amount;
     }
 
 }

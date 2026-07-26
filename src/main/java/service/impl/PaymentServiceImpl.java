@@ -1,11 +1,12 @@
 package service.impl;
 
+import com.ezra_anotida.invoice_maker.exception.InvalidRequestException;
+import com.ezra_anotida.invoice_maker.exception.ResourceNotFoundException;
 import dto.payment.CreatePaymentRequest;
 import dto.payment.PaymentResponse;
 import dto.payment.UpdatePaymentRequest;
 import entity.Invoice;
 import entity.Payment;
-import jakarta.persistence.EntityNotFoundException;
 import mapper.PaymentMapper;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -113,29 +114,29 @@ public class PaymentServiceImpl implements PaymentService {
     private Payment findPaymentById(Long paymentId) {
 
         if(paymentId == null){
-            throw new IllegalArgumentException("Payment id cannot be null");
+            throw new InvalidRequestException("Payment ID cannot be null");
         }
 
         return paymentRepository.findById(paymentId)
-                .orElseThrow(()-> new EntityNotFoundException("Payment with id" + paymentId + "was not found"));
+                .orElseThrow(() -> new ResourceNotFoundException("Payment", "id", paymentId));
     }
 
     private Invoice findInvoiceById(Long invoiceId) {
         if (invoiceId == null){
-            throw new IllegalArgumentException("Invoice id cannot be null");
+            throw new InvalidRequestException("Invoice ID cannot be null");
         }
 
         return invoiceRepository.findById(invoiceId)
-                .orElseThrow(()-> new EntityNotFoundException("Invoice ID with" + invoiceId + "not found"));
+                .orElseThrow(() -> new ResourceNotFoundException("Invoice", "id", invoiceId));
     }
 
     private void validatePaymentAmount(BigDecimal amount) {
         if(amount == null){
-            throw new IllegalArgumentException("Payment amount is required");
+            throw new InvalidRequestException("Payment amount is required");
         }
 
         if(amount.compareTo(BigDecimal.ZERO) <= 0){
-            throw  new IllegalArgumentException("Payment amount cannot be negative");
+            throw new InvalidRequestException("Payment amount must be greater than zero");
         }
     }
 

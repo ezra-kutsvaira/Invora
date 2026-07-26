@@ -1,5 +1,7 @@
 package service.impl;
 
+import com.ezra_anotida.invoice_maker.exception.BusinessRuleException;
+import com.ezra_anotida.invoice_maker.exception.InvalidRequestException;
 import entity.Invoice;
 import entity.InvoiceItem;
 import org.springframework.stereotype.Service;
@@ -60,32 +62,32 @@ public class InvoiceCalculationService {
 
     private void validateInvoice(Invoice invoice) {
         if (invoice == null) {
-            throw new IllegalArgumentException("Invoice cannot be null");
+            throw new InvalidRequestException("Invoice cannot be null");
         }
     }
 
     private void validateInvoiceItem(InvoiceItem invoiceItem) {
         if (invoiceItem == null) {
-            throw new IllegalArgumentException("Invoice item cannot be null");
+            throw new InvalidRequestException("Invoice item cannot be null");
         }
 
         Integer quantity = invoiceItem.getQuantity();
         BigDecimal unitPrice = invoiceItem.getUnitPrice();
 
         if (quantity == null) {
-            throw new IllegalArgumentException("Invoice item quantity cannot be null");
+            throw new InvalidRequestException("Invoice item quantity cannot be null");
         }
 
         if (quantity <= 0) {
-            throw new IllegalArgumentException("Invoice item quantity must be greater than zero");
+            throw new InvalidRequestException("Invoice item quantity must be greater than zero");
         }
 
         if (unitPrice == null) {
-            throw new IllegalArgumentException("Invoice item unit price cannot be null");
+            throw new InvalidRequestException("Invoice item unit price cannot be null");
         }
 
         if (unitPrice.compareTo(BigDecimal.ZERO) <= 0) {
-            throw new IllegalArgumentException("Invoice item unit price must be greater than zero");
+            throw new InvalidRequestException("Invoice item unit price must be greater than zero");
         }
     }
 
@@ -94,11 +96,11 @@ public class InvoiceCalculationService {
             BigDecimal subtotal
     ) {
         if (discountAmount.compareTo(BigDecimal.ZERO) < 0) {
-            throw new IllegalArgumentException("Discount amount cannot be negative");
+            throw new InvalidRequestException("Discount amount cannot be negative");
         }
 
         if (discountAmount.compareTo(subtotal) > 0) {
-            throw new IllegalArgumentException("Discount amount cannot exceed the invoice subtotal");
+            throw new BusinessRuleException("Discount amount cannot exceed the invoice subtotal");
         }
     }
 
