@@ -1,6 +1,7 @@
 package com.ezra_anotida.invoice_maker.service.impl;
 
 import com.ezra_anotida.invoice_maker.dto.audit.AuditLogResponse;
+import com.ezra_anotida.invoice_maker.dto.audit.CreateAuditLogRequest;
 import com.ezra_anotida.invoice_maker.entity.AuditLog;
 import com.ezra_anotida.invoice_maker.exception.InvalidRequestException;
 import com.ezra_anotida.invoice_maker.exception.ResourceNotFoundException;
@@ -10,6 +11,7 @@ import com.ezra_anotida.invoice_maker.service.AuditLogService;
 import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+
 
 import javax.swing.*;
 import java.time.LocalDateTime;
@@ -43,12 +45,9 @@ public class AuditLogServiceImpl implements AuditLogService {
 
         String normalizedDescription  = normalizeOptionalText(details, "Details" , MAX_DESCRIPTION_LENGTH);
 
-        AuditLog auditLog = new AuditLog();
-        auditLog.setAction(normalizedAction);
-        auditLog.setEntityName(normalizedEntityName);
-        auditLog.setEntityId(entityId);
-        auditLog.setDescription(normalizedDescription);
-        auditLog.setPerformedBy("SYSTEM");
+        CreateAuditLogRequest request = new CreateAuditLogRequest(normalizedAction, normalizedEntityName, entityId, normalizedDescription, "SYSTEM");
+
+        AuditLog auditLog = auditLogMapper.toEntity(request);
 
         auditLogRepository.save(auditLog);
     }
