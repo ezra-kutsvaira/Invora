@@ -2,6 +2,7 @@ package com.ezra_anotida.invoice_maker.service.impl;
 
 import com.ezra_anotida.invoice_maker.exception.DuplicateResourceException;
 import com.ezra_anotida.invoice_maker.exception.InvalidRequestException;
+import com.ezra_anotida.invoice_maker.exception.InvalidResourceStateException;
 import com.ezra_anotida.invoice_maker.exception.ResourceNotFoundException;
 import com.ezra_anotida.invoice_maker.dto.customer.CreateCustomerRequest;
 import com.ezra_anotida.invoice_maker.dto.customer.CustomerResponse;
@@ -53,12 +54,16 @@ public class CustomerServiceImpl implements CustomerService {
     @Override
     @Transactional(readOnly = true)
     public List<CustomerResponse> getAllCustomers() {
-        List<Customer> customers = customerRepository.findAll();
+
+        //returning only active customers
+        List<Customer> customers = customerRepository.findByActiveTrue();
+
         return customerMapper.toResponseList(customers);
 
     }
 
     @Override
+    @Transactional(readOnly = true)
     public List<CustomerSummaryResponse> getCustomerSummaries() {
         List<Customer> customers = customerRepository.findByActiveTrue();
         return customerMapper.toSummaryResponseList(customers);
@@ -80,22 +85,57 @@ public class CustomerServiceImpl implements CustomerService {
     }
 
     @Override
-    public void deleteCustomer(Long customerId) {
+    public void deactivateCustomer(Long customerId) {
+
         Customer customer = findCustomerById(customerId);
-        customerRepository.delete(customer);
+
+        if(!Boolean.TRUE.equals(customer.getActive())){
+            throw new InvalidResourceStateException("Customer is already inactive");
+        }
+
+        customer.setActive(false);
+
+        customerRepository.save(customer);
     }
 
     @Override
+    @Transactional(readOnly = true)
     public List<CustomerResponse> searchCustomers(String keyword) {
+
         if(keyword == null || keyword.isBlank()){
             return getAllCustomers();
         }
-        List<Customer> customers = customerRepository.findByCustomerNameContainingIgnoreCase(keyword.trim());
+        List<Customer> customers = customerRepository.findByActiveTrueAndCustomerNameContainingIgnoreCase(keyword.trim());
+
+        return customerMapper.toResponseList(customers);
+    }
+
+    @Override
+    public CustomerResponse reactivateCustomer(Long customerId) {
+
+        Customer customer = findCustomerById(customerId);
+
+        if(Boolean.TRUE.equals(customer.getActive())){
+            throw new InvalidResourceStateException("Customer is already active");
+        }
+
+        customer.setActive(true);
+
+        Customer reactivatedCustomer = customerRepository.save(customer);
+
+        return customerMapper.toResponse(reactivatedCustomer);
+    }
+
+    @Override
+    public List<CustomerResponse> getInActiveCustomers() {
+
+       List<Customer> customers = customerRepository.findActiveFalse();
+
         return customerMapper.toResponseList(customers);
     }
 
     private Customer findCustomerById(Long customerId) {
-        if(customerId == null){
+        if(customerId == null || customerId <= 0){
             throw new InvalidRequestException("Customer ID cannot be null");
         }
         return customerRepository.findById(customerId)
@@ -104,12 +144,12 @@ public class CustomerServiceImpl implements CustomerService {
 
     //Email Validation
     private void validateUniqueEmail(String email, Customer existingCustomer){
-        if(email == null || email.isEmpty()){
+        if(email == null || email.isBlank()){
             return;
         }
 
         boolean emailBelongsToCurrentCustomer = existingCustomer != null && existingCustomer.getEmail() != null && existingCustomer.getEmail().equalsIgnoreCase(email);
-        if (!emailBelongsToCurrentCustomer && customerRepository.existsByEmail(email)) {
+        if (!emailBelongsToCurrentCustomer && customerRepository.existsByEmailIgnoreCase(normalizedEmail(email))) {
 
             throw new DuplicateResourceException("Customer", "email", email);
         }
@@ -125,5 +165,12 @@ public class CustomerServiceImpl implements CustomerService {
 
             throw new DuplicateResourceException("Customer", "phone number", phone);
         }
+    }
+
+    private String normalizedEmail(String email){
+        if(email == null || email.isBlank()){
+            return null;
+        }
+        return email.trim().toLowerCase();
     }
 }

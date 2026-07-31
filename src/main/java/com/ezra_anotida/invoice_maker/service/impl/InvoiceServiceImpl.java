@@ -45,7 +45,7 @@ public class InvoiceServiceImpl implements InvoiceService {
 
         validateInvoiceDates(createInvoiceRequest.invoiceDate(), createInvoiceRequest.dueDate());
 
-        Customer customer = findCustomerById(createInvoiceRequest.customerId());
+        Customer customer = findActiveCustomerById(createInvoiceRequest.customerId());
 
         Invoice invoice = invoiceMapper.toEntity(createInvoiceRequest);
 
@@ -127,7 +127,7 @@ public class InvoiceServiceImpl implements InvoiceService {
 
         //updating the customer on the invoice
         if (request.customerId() != null) {
-            Customer customer = findCustomerById(request.customerId());
+            Customer customer = findActiveCustomerById(request.customerId());
 
             existingInvoice.setCustomer(customer);
         }
@@ -189,6 +189,15 @@ public class InvoiceServiceImpl implements InvoiceService {
         Invoice cancelledInvoice = invoiceRepository.save(invoice);
 
         return invoiceMapper.toResponse(cancelledInvoice);
+    }
+
+    private Customer findActiveCustomerById(Long customerId){
+        if(customerId == null || customerId <= 0){
+            throw  new InvalidRequestException("Customer id must be greater than zero");
+        }
+
+        return customerRepository.findByIdAndActiveTrue(customerId)
+                .orElseThrow(() -> new ResourceNotFoundException("Active customer", "id" , customerId));
     }
 
     @Override
@@ -278,4 +287,6 @@ public class InvoiceServiceImpl implements InvoiceService {
             throw new InvalidResourceStateException("A paid invoice cannot be updated");
         }
     }
+
+
 }
