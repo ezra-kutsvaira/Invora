@@ -8,11 +8,13 @@ import com.ezra_anotida.invoice_maker.dto.currency.CreateCurrencyRequest;
 import com.ezra_anotida.invoice_maker.dto.currency.CurrencyResponse;
 import com.ezra_anotida.invoice_maker.dto.currency.UpdateCurrencyRequest;
 import com.ezra_anotida.invoice_maker.entity.Currency;
-import jakarta.transaction.Transactional;
+
 import com.ezra_anotida.invoice_maker.mapper.CurrencyMapper;
 import org.springframework.stereotype.Service;
 import com.ezra_anotida.invoice_maker.repository.CurrencyRepository;
 import com.ezra_anotida.invoice_maker.service.CurrencyService;
+import org.springframework.transaction.annotation.Transactional;
+
 import java.util.List;
 
 @Service
@@ -56,6 +58,7 @@ public class CurrencyServiceImpl implements CurrencyService {
     }
 
     @Override
+    @Transactional(readOnly = true)
     public CurrencyResponse getCurrencyById(Long currencyId) {
 
         Currency currency = findCurrencyById(currencyId);

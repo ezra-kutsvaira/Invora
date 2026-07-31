@@ -18,9 +18,12 @@ public interface CustomerService {
 
     CustomerResponse updateCustomer(Long customerId, UpdateCustomerRequest request);
 
-    void deleteCustomer(Long customerId);
+    void deactivateCustomer(Long customerId);
 
     List<CustomerResponse> searchCustomers(String keyword);
 
+    CustomerResponse reactivateCustomer(Long customerId);
+
+    List<CustomerResponse> getInActiveCustomers();
 
 }
