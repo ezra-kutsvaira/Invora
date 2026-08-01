@@ -47,6 +47,9 @@ public class CurrencyServiceImpl implements CurrencyService {
             currency.setDefaultCurrency(false);
         }
 
+        if(Boolean.TRUE.equals(currency.getDefaultCurrency() && !Boolean.TRUE.equals(currency.getActive()))){
+            throw new InvalidRequestException("An inactive currency cannot be set as default");
+        }
         //Setting a new currency as a default, remove the old currency
         if(Boolean.TRUE.equals(currency.getDefaultCurrency())){
             removeCurrentDefaultCurrency();
@@ -99,6 +102,7 @@ public class CurrencyServiceImpl implements CurrencyService {
 
         validateAlreadyExistingCurrency(request.code(), existingCurrency);
 
+
         boolean becomingDefault = Boolean.TRUE.equals(request.defaultCurrency()) && !Boolean.TRUE.equals(existingCurrency.getDefaultCurrency());
 
         if(becomingDefault){
@@ -144,16 +148,21 @@ public class CurrencyServiceImpl implements CurrencyService {
     }
 
     @Override
-    public void deleteCurrency(Long currencyId) {
-
+    public void deactivateCurrency(Long currencyId) {
+        
         Currency currency = findCurrencyById(currencyId);
 
-        if(Boolean.TRUE.equals(currency.getDefaultCurrency())){
-            throw new InvalidResourceStateException("The default currency cannot be deleted");
+        if (Boolean.TRUE.equals(currency.getDefaultCurrency())) {
+            throw new InvalidResourceStateException("The default currency cannot be deactivated");
         }
 
-        currencyRepository.delete(currency);
+        if (!Boolean.TRUE.equals(currency.getActive())) {
+            throw new InvalidResourceStateException("Currency is already inactive");
+        }
 
+        currency.setActive(false);
+
+        currencyRepository.save(currency);
     }
 
     private Currency findCurrencyById(Long currencyId) {
