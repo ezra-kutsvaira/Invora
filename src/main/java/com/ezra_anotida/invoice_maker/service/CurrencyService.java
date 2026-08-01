@@ -22,5 +22,5 @@ public interface CurrencyService {
 
     CurrencyResponse setDefaultCurrency(Long currencyId);
 
-    void deleteCurrency(Long currencyId);
+    void deactivateCurrency(Long currencyId);
 }

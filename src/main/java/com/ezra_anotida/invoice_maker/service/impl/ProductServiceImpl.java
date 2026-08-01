@@ -54,6 +54,7 @@ public class ProductServiceImpl implements ProductService {
     }
 
     @Override
+    @Transactional(readOnly = true)
     public ProductResponse getProductById(Long productId) {
 
         Product product = findProductById(productId);
@@ -62,6 +63,7 @@ public class ProductServiceImpl implements ProductService {
     }
 
     @Override
+    @Transactional(readOnly = true)
     public List<ProductResponse> getAllProducts() {
 
         List<Product> products = productRepository.findAll();
@@ -85,6 +87,14 @@ public class ProductServiceImpl implements ProductService {
 
         validateUniqueName(request.name(), existingProduct);
 
+        if(request.unitPrice()!=null){
+            validatePrice(request.unitPrice());
+        }
+
+        if(request.stockQuantity() != null){
+            validateStockQuantity(request.stockQuantity());
+        }
+
         productMapper.updateToEntityFromRequest(request, existingProduct);
 
         Product updatedProduct = productRepository.save(existingProduct);
@@ -98,11 +108,14 @@ public class ProductServiceImpl implements ProductService {
 
         Product product =  findProductById(productId);
 
-        productRepository.delete(product);
+        product.setActive(false);
+
+        productRepository.save(product);
 
     }
 
     @Override
+    @Transactional(readOnly = true)
     public List<ProductResponse> searchProducts(String keyword) {
 
         if(keyword == null || keyword.isBlank()){
@@ -115,6 +128,7 @@ public class ProductServiceImpl implements ProductService {
     }
 
     @Override
+    @Transactional(readOnly = true)
     public List<ProductResponse> getProductsByCategory(String category) {
 
         //Work on Null Pointers
@@ -127,6 +141,7 @@ public class ProductServiceImpl implements ProductService {
     }
 
     @Override
+    @Transactional(readOnly = true)
     public List<ProductResponse> getAllActiveProducts() {
 
         List<Product> products = productRepository.findByActiveTrue();
@@ -135,6 +150,7 @@ public class ProductServiceImpl implements ProductService {
     }
 
     @Override
+    @Transactional(readOnly = true)
     public List<ProductResponse> getAllActiveProductsByCategory(String category) {
         if(category == null || category.isBlank()){
             throw new InvalidRequestException("Category cannot be empty");
@@ -159,7 +175,10 @@ public class ProductServiceImpl implements ProductService {
             return;
         }
 
-        boolean nameBelongsToCurrentProduct = existingProduct != null && existingProduct.getProductName() != null && existingProduct.getProductName().equals(name);
+        String normalizedName = name.trim();
+
+
+        boolean nameBelongsToCurrentProduct = existingProduct != null && existingProduct.getProductName() != null && existingProduct.getProductName().equalsIgnoreCase(normalizedName);
 
         if(!nameBelongsToCurrentProduct && productRepository.existByNameIgnoreCase(name)){
             throw new DuplicateResourceException("Product", "name", name);

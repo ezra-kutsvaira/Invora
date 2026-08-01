@@ -6,5 +6,8 @@ import java.util.Optional;
 
 public interface CompanyProfileRepository extends JpaRepository<CompanyProfile, Long> {
 
-    Optional<CompanyProfile> findByActiveTrue ();
+    Optional<CompanyProfile>findByOrganizationIdAndActiveTrue(Long organizationId);
+
+    boolean existsByOrganizationIdAndActiveTrue(Long organizationId);
+
 }

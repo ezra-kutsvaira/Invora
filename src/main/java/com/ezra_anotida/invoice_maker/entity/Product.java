@@ -28,6 +28,8 @@ public class Product {
     @Size(max = 1000)
     private  String description;
 
+    @Column(length = 100)
+    private String category;
 
     @NotNull(message = "Stock quantity is required")
     @PositiveOrZero(message = "Stock quantity cannot be negative")
@@ -99,12 +101,16 @@ public class Product {
         return updatedAt;
     }
 
+    public String getCategory() {
+        return category;
+    }
+
     public void setId(Long id) {
         this.id = id;
     }
 
-    public void setproductName(String name) {
-        this.productName = productName;
+    public void setCategory(String category) {
+        this.category = category;
     }
 
     public void setDescription(String description) {

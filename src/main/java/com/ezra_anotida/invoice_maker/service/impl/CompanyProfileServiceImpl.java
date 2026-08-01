@@ -1,6 +1,7 @@
 package com.ezra_anotida.invoice_maker.service.impl;
 
 import com.ezra_anotida.invoice_maker.exception.DuplicateResourceException;
+import com.ezra_anotida.invoice_maker.exception.InvalidRequestException;
 import com.ezra_anotida.invoice_maker.exception.ResourceNotFoundException;
 import com.ezra_anotida.invoice_maker.dto.company.CompanyProfileResponse;
 import com.ezra_anotida.invoice_maker.dto.company.CreateCompanyProfileRequest;
@@ -63,8 +64,11 @@ public class CompanyProfileServiceImpl implements CompanyProfileService {
 
     //Helper Methods
 
-    private CompanyProfile findActiveCompanyProfile() {
-        return companyProfileRepository.findByActiveTrue()
+    private CompanyProfile findActiveCompanyProfile(Long organizationId) {
+
+        validateOrganizationId(organizationId);
+
+        return companyProfileRepository.findByOrganizationIdAndActiveTrue(or)
                 .orElseThrow(() -> new ResourceNotFoundException("Active company profile was not found"));
 
     }
@@ -72,6 +76,12 @@ public class CompanyProfileServiceImpl implements CompanyProfileService {
     private void validateCompanyProfileDoesNotExist(){
         if(companyProfileRepository.findByActiveTrue().isPresent()){
             throw new DuplicateResourceException("An active company profile already exists");
+        }
+    }
+
+    private void validateOrganizationId(Long organizationId){
+        if(organizationId == null || organizationId <= 0){
+            throw new InvalidRequestException("Organization ID must be greater than zero");
         }
     }
 }
