@@ -50,6 +50,10 @@ public class CompanyProfile {
     @Column(nullable = false)
     private String tinNumber;
 
+    @OneToOne(fetch = FetchType.LAZY, optional = false)
+    @JoinColumn(name = "organization_id" , nullable = false, unique = true, foreignKey = @ForeignKey(name = "fk_company_profiles_organization"))
+    private Organization organization;
+
     private String bankAccountName;
 
     private String bankAccountNumber;
@@ -226,5 +230,13 @@ public class CompanyProfile {
 
     public void setCompanyName(String companyName) {
         this.companyName = companyName;
+    }
+
+    public Organization getOrganization() {
+        return organization;
+    }
+
+    public void setOrganization(Organization organization) {
+        this.organization = organization;
     }
 }
