@@ -1,7 +1,7 @@
 package com.ezra_anotida.invoice_maker.service.impl;
 
 import com.ezra_anotida.invoice_maker.entity.Organization;
-import com.ezra_anotida.invoice_maker.exception.DuplicateResourceException;
+import com.ezra_anotida.invoice_maker.enums.OrganizationStatus;\nimport com.ezra_anotida.invoice_maker.exception.DuplicateResourceException;
 import com.ezra_anotida.invoice_maker.exception.InvalidRequestException;
 import com.ezra_anotida.invoice_maker.exception.ResourceNotFoundException;
 import com.ezra_anotida.invoice_maker.dto.company.CompanyProfileResponse;
@@ -97,7 +97,7 @@ public class CompanyProfileServiceImpl implements CompanyProfileService {
         validateOrganizationId(organizationId);
 
         return organizationRepository
-                .findByIdAndActiveTrue(organizationId)
+                .findByIdAndStatus(organizationId, OrganizationStatus.ACTIVE)
                 .orElseThrow(() -> new ResourceNotFoundException("Active organization" , "id" , organizationId));
     }
 
