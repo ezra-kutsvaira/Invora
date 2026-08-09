@@ -277,12 +277,9 @@ public class InvoiceServiceImpl implements InvoiceService {
     }
 
     private void validateInvoiceCanBeUpdated(Invoice invoice) {
-        if (invoice.getStatus() == InvoiceStatus.CANCELLED) {
-            throw new InvalidResourceStateException("A cancelled invoice cannot be updated");
-        }
 
-        if (invoice.getStatus() == InvoiceStatus.PAID) {
-            throw new InvalidResourceStateException("A paid invoice cannot be updated");
+        if(invoice.getStatus() != InvoiceStatus.DRAFT){
+            throw new InvalidResourceStateException("Only draft invoice can be updated");
         }
     }
 

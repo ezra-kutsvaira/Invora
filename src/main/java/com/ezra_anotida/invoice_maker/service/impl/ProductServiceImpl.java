@@ -123,7 +123,7 @@ public class ProductServiceImpl implements ProductService {
 
         }
 
-        List<Product> products = productRepository.findByNameContainingIgnoreCase(keyword.trim());
+        List<Product> products = productRepository.findByProductNameContainingIgnoreCase(keyword.trim());
         return productMapper.toResponseList(products);
     }
 
@@ -135,7 +135,7 @@ public class ProductServiceImpl implements ProductService {
         if(category == null || category.isBlank()){
             throw new InvalidRequestException("Category cannot be empty");
         }
-        List<Product> products = productRepository.findByNameContainingIgnoreCase(category.trim());
+        List<Product> products = productRepository.findByCategoryIgnoreCase(category.trim());
 
         return productMapper.toResponseList(products);
     }
@@ -152,15 +152,17 @@ public class ProductServiceImpl implements ProductService {
     @Override
     @Transactional(readOnly = true)
     public List<ProductResponse> getAllActiveProductsByCategory(String category) {
+
         if(category == null || category.isBlank()){
             throw new InvalidRequestException("Category cannot be empty");
         }
-        List<Product> products = productRepository.findByNameContainingIgnoreCase(category.trim());
+        List<Product> products = productRepository.findByActiveTrueAndCategoryIgnoreCase(category.trim());
 
         return productMapper.toResponseList(products);
     }
 
     //Helper Methods
+    @Transactional(readOnly = true)
     private Product findProductById(Long productId) {
         if(productId == null){
             throw new InvalidRequestException("Product ID cannot be null");
@@ -180,7 +182,7 @@ public class ProductServiceImpl implements ProductService {
 
         boolean nameBelongsToCurrentProduct = existingProduct != null && existingProduct.getProductName() != null && existingProduct.getProductName().equalsIgnoreCase(normalizedName);
 
-        if(!nameBelongsToCurrentProduct && productRepository.existByNameIgnoreCase(name)){
+        if(!nameBelongsToCurrentProduct && productRepository.existByProductNameIgnoreCase(name)){
             throw new DuplicateResourceException("Product", "name", name);
         }
 

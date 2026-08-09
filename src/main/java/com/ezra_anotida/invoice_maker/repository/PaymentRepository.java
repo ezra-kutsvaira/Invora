@@ -12,9 +12,11 @@ public interface PaymentRepository extends JpaRepository<Payment, Long> {
 
     List<Payment> findByInvoice (Invoice invoice);
 
-    List<Payment> findPaymentDateBetween (LocalDate startDate , LocalDate endDate);
+    List<Payment> findByPaymentDateBetween (LocalDate startDate , LocalDate endDate);
 
     List<Payment> findByPaymentMethod (PaymentMethod paymentMethod);
 
     List<Payment> findByInvoiceId(Long id);
+
+
 }

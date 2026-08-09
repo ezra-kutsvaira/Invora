@@ -29,12 +29,8 @@ public class Organization {
     private String slug;
 
     @Enumerated(EnumType.STRING)
-    @Column(name = "status", nullable = false, length = 30
-    )
+    @Column(name = "status", nullable = false, length = 30)
     private OrganizationStatus status = OrganizationStatus.ACTIVE;
-
-    @Column(name = "active", nullable = false)
-    private Boolean active = true;
 
     @OneToOne(mappedBy = "organization", fetch = FetchType.LAZY)
     private CompanyProfile companyProfile;
@@ -59,9 +55,6 @@ public class Organization {
             status = OrganizationStatus.ACTIVE;
         }
 
-        if (active == null) {
-            active = true;
-        }
     }
 
     @PreUpdate
@@ -83,10 +76,6 @@ public class Organization {
 
     public OrganizationStatus getStatus() {
         return status;
-    }
-
-    public Boolean getActive() {
-        return active;
     }
 
     public CompanyProfile getCompanyProfile() {
@@ -117,10 +106,6 @@ public class Organization {
             OrganizationStatus status
     ) {
         this.status = status;
-    }
-
-    public void setActive(Boolean active) {
-        this.active = active;
     }
 
     public void setCompanyProfile(

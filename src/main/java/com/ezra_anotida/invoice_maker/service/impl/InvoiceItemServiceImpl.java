@@ -170,6 +170,7 @@ public class InvoiceItemServiceImpl implements InvoiceItemService {
         if(invoice.getStatus() != InvoiceStatus.DRAFT){
             throw new InvalidResourceStateException("Only draft invoices can be modified");
         }
+
     }
 
 }
