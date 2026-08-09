@@ -16,13 +16,7 @@ public interface OrganizationRepository extends JpaRepository<Organization, Long
 
     Optional<Organization> findByIdAndStatus(Long organizationId, OrganizationStatus status);
 
-    Optional<Organization> findByIdAndActiveTrue(Long organizationId);
-
     boolean existsBySlugIgnoreCase(String slug);
-
-    Page<Organization> findByActiveTrue(Pageable pageable);
-
-    Page<Organization> findByActiveFalse(Pageable pageable);
 
     Page<Organization> findByStatus(OrganizationStatus status, Pageable pageable);
 
