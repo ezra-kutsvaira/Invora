@@ -95,6 +95,7 @@ public class Invoice {
         }
     }
 
+    @PreUpdate
     public void preUpdate() {
         updatedAt = LocalDateTime.now();
     }
@@ -106,7 +107,7 @@ public class Invoice {
 
     public void removeItem(InvoiceItem item) {
         items.remove(item);
-        item.setInvoice(this);
+        item.setInvoice(null);
     }
 
     public Long getId() {

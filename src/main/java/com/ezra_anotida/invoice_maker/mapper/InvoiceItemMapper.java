@@ -9,19 +9,23 @@ import org.mapstruct.*;
 
 import java.util.List;
 
-@Mapper(componentModel = "spring ")
+@Mapper(componentModel = "spring")
 public interface InvoiceItemMapper {
 
-    @Mapping(target = "product", source = "productId")
+    @Mapping(target = "product", ignore = true)
+    @Mapping(target = "invoice", ignore = true)
+    @Mapping(target = "lineTotal", ignore = true)
     InvoiceItem toEntity(CreateInvoiceItemRequest request);
 
     @Mapping(target = "productId", source = "product.id")
-    @Mapping(target = "productName", source = "product.name")
+    @Mapping(target = "productName", source = "product.productName")
     InvoiceItemResponse toResponse(InvoiceItem item);
 
     List<InvoiceItemResponse> toResponseList(List<InvoiceItem> invoiceItems);
 
-    @Mapping(target = "product", source = "productId")
+    @Mapping(target = "product", ignore = true)
+    @Mapping(target = "invoice", ignore = true)
+    @Mapping(target = "lineTotal", ignore = true)
     @BeanMapping(nullValuePropertyMappingStrategy = NullValuePropertyMappingStrategy.IGNORE)
     void updateEntityFromRequest(UpdateInvoiceItemRequest request, @MappingTarget InvoiceItem item);
 

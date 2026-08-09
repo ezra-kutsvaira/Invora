@@ -1,6 +1,9 @@
 package com.ezra_anotida.invoice_maker.service.impl;
 
+import com.ezra_anotida.invoice_maker.enums.InvoiceStatus;
+import com.ezra_anotida.invoice_maker.exception.BusinessRuleException;
 import com.ezra_anotida.invoice_maker.exception.InvalidRequestException;
+import com.ezra_anotida.invoice_maker.exception.InvalidResourceStateException;
 import com.ezra_anotida.invoice_maker.exception.ResourceNotFoundException;
 import com.ezra_anotida.invoice_maker.dto.payment.CreatePaymentRequest;
 import com.ezra_anotida.invoice_maker.dto.payment.PaymentResponse;
@@ -38,12 +41,23 @@ public class PaymentServiceImpl implements PaymentService {
 
         Invoice invoice = findInvoiceById(invoiceId);
 
+        validateInvoiceCanReceivePayment(invoice);
+
         validatePaymentAmount(request.amount());
 
+        validatePaymentDoesNotExceedBalance(request.amount(), invoice.getBalanceDue());
+
         Payment payment = paymentMapper.toEntity(request);
+
         payment.setInvoice(invoice);
 
         Payment savedPayment = paymentRepository.save(payment);
+
+        paymentRepository.flush();
+
+        recalculateInvoicePayments(invoice);
+
+        updateInvoicePaymentStatus(invoice);
 
         return paymentMapper.toResponse(savedPayment);
     }
@@ -91,6 +105,12 @@ public class PaymentServiceImpl implements PaymentService {
         paymentMapper.updateEntityFromRequest(request,existingPayment);
 
         Payment updatedPayment = paymentRepository.save(existingPayment);
+
+        paymentRepository.flush();
+
+        recalculateInvoicePayments(invoice);
+
+        updateInvoicePaymentStatus(invoice);
 
         return paymentMapper.toResponse(updatedPayment);
     }
@@ -156,4 +176,42 @@ public class PaymentServiceImpl implements PaymentService {
 
     }
 
+    private void validateInvoiceCanReceivePayment(Invoice invoice){
+
+        if(invoice.getStatus() ==  InvoiceStatus.DRAFT){
+            throw new InvalidResourceStateException("A draft invoice cannot receive payments");
+        }
+
+        if(invoice.getStatus() == InvoiceStatus.CANCELLED){
+            throw new InvalidResourceStateException("A cancelled invoice cannot receive payments");
+        }
+
+        if(invoice.getStatus() == InvoiceStatus.PAID){
+            throw new InvalidResourceStateException("A paid invoice cannot receive another payment");
+        }
+    }
+
+    private void validatePaymentDoesNotExceedBalance(BigDecimal paymentAmount, BigDecimal balanceDue){
+
+        if(balanceDue == null){
+            throw new InvalidResourceStateException("Invalid balance has not been calculated");
+        }
+
+        if(paymentAmount.compareTo(balanceDue) > 0){
+            throw new BusinessRuleException("Payment amount cannot exceed" + "the outstanding invoice balance");
+        }
+    }
+
+    private void updateInvoicePaymentStatus(Invoice invoice){
+
+        if(invoice.getAmountPaid().compareTo(BigDecimal.ZERO) == 0){
+            invoice.setStatus(InvoiceStatus.SENT);
+        }else if (invoice.getBalanceDue().compareTo(BigDecimal.ZERO) == 0){
+            invoice.setStatus(InvoiceStatus.PAID);
+        }else{
+            invoice.setStatus(InvoiceStatus.PARTIALLY_PAID);
+        }
+
+        invoiceRepository.save(invoice);
+    }
 }

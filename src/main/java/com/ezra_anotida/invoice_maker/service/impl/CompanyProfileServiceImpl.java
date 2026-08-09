@@ -36,7 +36,7 @@ public class CompanyProfileServiceImpl implements CompanyProfileService {
 
         validateCompanyProfileDoesNotExist(organizationId);
 
-        Organization organization = findOrganizationById(organizationId);
+        Organization organization = findActiveOrganizationById(organizationId);
 
         CompanyProfile companyProfile = companyProfileMapper.toEntity(request);
 
@@ -92,12 +92,13 @@ public class CompanyProfileServiceImpl implements CompanyProfileService {
         }
     }
 
-    public Organization findOrganizationById (Long organizationId){
+    private Organization findActiveOrganizationById(Long organizationId){
 
         validateOrganizationId(organizationId);
 
         return organizationRepository
-                .findById(organizationId).orElseThrow(() -> new ResourceNotFoundException("Organization", "id", organizationId));
+                .findByIdAndActiveTrue(organizationId)
+                .orElseThrow(() -> new ResourceNotFoundException("Active organization" , "id" , organizationId));
     }
 
     private void validateOrganizationId(Long organizationId) {

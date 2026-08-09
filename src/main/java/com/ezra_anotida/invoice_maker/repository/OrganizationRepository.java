@@ -14,6 +14,8 @@ public interface OrganizationRepository extends JpaRepository<Organization, Long
 
     Optional<Organization> findBySlugIgnoreCase(String slug);
 
+    Optional<Organization> findByIdAndStatus(Long organizationId, OrganizationStatus status);
+
     Optional<Organization> findByIdAndActiveTrue(Long organizationId);
 
     boolean existsBySlugIgnoreCase(String slug);
