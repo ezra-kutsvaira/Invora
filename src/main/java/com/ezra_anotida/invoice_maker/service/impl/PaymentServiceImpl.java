@@ -1,217 +1,133 @@
 package com.ezra_anotida.invoice_maker.service.impl;
 
+import com.ezra_anotida.invoice_maker.dto.payment.*;
+import com.ezra_anotida.invoice_maker.entity.*;
 import com.ezra_anotida.invoice_maker.enums.InvoiceStatus;
-import com.ezra_anotida.invoice_maker.exception.BusinessRuleException;
-import com.ezra_anotida.invoice_maker.exception.InvalidRequestException;
-import com.ezra_anotida.invoice_maker.exception.InvalidResourceStateException;
-import com.ezra_anotida.invoice_maker.exception.ResourceNotFoundException;
-import com.ezra_anotida.invoice_maker.dto.payment.CreatePaymentRequest;
-import com.ezra_anotida.invoice_maker.dto.payment.PaymentResponse;
-import com.ezra_anotida.invoice_maker.dto.payment.UpdatePaymentRequest;
-import com.ezra_anotida.invoice_maker.entity.Invoice;
-import com.ezra_anotida.invoice_maker.entity.Payment;
+import com.ezra_anotida.invoice_maker.exception.*;
 import com.ezra_anotida.invoice_maker.mapper.PaymentMapper;
+import com.ezra_anotida.invoice_maker.repository.*;
+import com.ezra_anotida.invoice_maker.service.PaymentService;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import com.ezra_anotida.invoice_maker.repository.InvoiceRepository;
-import com.ezra_anotida.invoice_maker.repository.PaymentRepository;
-import com.ezra_anotida.invoice_maker.service.PaymentService;
-
 import java.math.BigDecimal;
 import java.util.List;
 
 @Service
 @Transactional
 public class PaymentServiceImpl implements PaymentService {
-
     private final PaymentRepository paymentRepository;
-    private final PaymentMapper paymentMapper;
     private final InvoiceRepository invoiceRepository;
-    private final InvoiceCalculationService invoiceCalculationService;
+    private final PaymentMapper mapper;
+    private final InvoiceCalculationService calculationService;
 
-    public PaymentServiceImpl(PaymentRepository paymentRepository, PaymentMapper paymentMapper, InvoiceRepository invoiceRepository, InvoiceCalculationService invoiceCalculationService) {
+    public PaymentServiceImpl(PaymentRepository paymentRepository, InvoiceRepository invoiceRepository,
+                              PaymentMapper mapper, InvoiceCalculationService calculationService) {
         this.paymentRepository = paymentRepository;
-        this.paymentMapper = paymentMapper;
         this.invoiceRepository = invoiceRepository;
-        this.invoiceCalculationService = invoiceCalculationService;
+        this.mapper = mapper;
+        this.calculationService = calculationService;
     }
 
     @Override
-    public PaymentResponse recordPayment(Long invoiceId, CreatePaymentRequest request) {
-
-        Invoice invoice = findInvoiceById(invoiceId);
-
+    public PaymentResponse recordPayment(Long organizationId, Long invoiceId, CreatePaymentRequest request) {
+        Invoice invoice = findInvoice(organizationId, invoiceId);
         validateInvoiceCanReceivePayment(invoice);
-
-        validatePaymentAmount(request.amount());
-
-        validatePaymentDoesNotExceedBalance(request.amount(), invoice.getBalanceDue());
-
-        Payment payment = paymentMapper.toEntity(request);
-
+        validateAmount(request.amount());
+        validateNotOverBalance(request.amount(), invoice.getBalanceDue());
+        Payment payment = mapper.toEntity(request);
         payment.setInvoice(invoice);
+        Payment saved = paymentRepository.saveAndFlush(payment);
+        recalculate(invoice);
+        updateStatus(invoice);
+        return mapper.toResponse(saved);
+    }
 
-        Payment savedPayment = paymentRepository.save(payment);
+    @Override @Transactional(readOnly = true)
+    public PaymentResponse getPaymentById(Long organizationId, Long paymentId) {
+        return mapper.toResponse(findPayment(organizationId, paymentId));
+    }
 
-        paymentRepository.flush();
+    @Override @Transactional(readOnly = true)
+    public List<PaymentResponse> getAllPayments(Long organizationId) {
+        return mapper.toResponseList(paymentRepository.findByInvoice_Organization_Id(organizationId));
+    }
 
-        recalculateInvoicePayments(invoice);
-
-        updateInvoicePaymentStatus(invoice);
-
-        return paymentMapper.toResponse(savedPayment);
+    @Override @Transactional(readOnly = true)
+    public List<PaymentResponse> getPaymentsByInvoice(Long organizationId, Long invoiceId) {
+        findInvoice(organizationId, invoiceId);
+        return mapper.toResponseList(paymentRepository.findByInvoice_Organization_IdAndInvoice_Id(organizationId, invoiceId));
     }
 
     @Override
-    @Transactional(readOnly = true)
-    public PaymentResponse getPaymentById(Long paymentId) {
-
-        Payment payment = findPaymentById(paymentId);
-
-        return paymentMapper.toResponse(payment);
-    }
-
-    @Override
-    @Transactional(readOnly = true)
-    public List<PaymentResponse> getAllPayments() {
-
-        List<Payment> payments = paymentRepository.findAll();
-
-        return paymentMapper.toResponseList(payments);
-    }
-
-    @Override
-    @Transactional(readOnly = true)
-    public List<PaymentResponse> getPaymentsByInvoice(Long invoiceId) {
-
-        findInvoiceById(invoiceId);
-
-        List<Payment> payments = paymentRepository.findByInvoiceId(invoiceId);
-
-        return paymentMapper.toResponseList(payments);
-    }
-
-    @Override
-    public PaymentResponse updatePayment(Long paymentId, UpdatePaymentRequest request) {
-
-        Payment existingPayment  = findPaymentById(paymentId);
-
-        if(request.amount() != null){
-            validatePaymentAmount(request.amount());
-        }
-
-        Invoice invoice = existingPayment.getInvoice();
-
-        paymentMapper.updateEntityFromRequest(request,existingPayment);
-
-        Payment updatedPayment = paymentRepository.save(existingPayment);
-
-        paymentRepository.flush();
-
-        recalculateInvoicePayments(invoice);
-
-        updateInvoicePaymentStatus(invoice);
-
-        return paymentMapper.toResponse(updatedPayment);
-    }
-
-    @Override
-    public void deletePayment(Long paymentId) {
-
-        Payment payment = findPaymentById(paymentId);
-
+    public PaymentResponse updatePayment(Long organizationId, Long paymentId, UpdatePaymentRequest request) {
+        Payment payment = findPayment(organizationId, paymentId);
         Invoice invoice = payment.getInvoice();
-
-        paymentRepository.delete(payment);
-
-        paymentRepository.flush();
-
-        recalculateInvoicePayments(invoice);
-
+        BigDecimal previousAmount = payment.getAmount();
+        if (request.amount() != null) {
+            validateAmount(request.amount());
+            BigDecimal available = invoice.getBalanceDue().add(previousAmount);
+            validateNotOverBalance(request.amount(), available);
+        }
+        mapper.updateEntityFromRequest(request, payment);
+        Payment saved = paymentRepository.saveAndFlush(payment);
+        recalculate(invoice);
+        updateStatus(invoice);
+        return mapper.toResponse(saved);
     }
 
-    //Helper Methods
-    private Payment findPaymentById(Long paymentId) {
+    @Override
+    public void deletePayment(Long organizationId, Long paymentId) {
+        Payment payment = findPayment(organizationId, paymentId);
+        Invoice invoice = payment.getInvoice();
+        paymentRepository.delete(payment);
+        paymentRepository.flush();
+        recalculate(invoice);
+        updateStatus(invoice);
+    }
 
-        if(paymentId == null){
-            throw new InvalidRequestException("Payment ID cannot be null");
-        }
-
-        return paymentRepository.findById(paymentId)
+    private Payment findPayment(Long organizationId, Long paymentId) {
+        validateId(paymentId, "Payment");
+        return paymentRepository.findByIdAndInvoice_Organization_Id(paymentId, organizationId)
                 .orElseThrow(() -> new ResourceNotFoundException("Payment", "id", paymentId));
     }
 
-    private Invoice findInvoiceById(Long invoiceId) {
-        if (invoiceId == null){
-            throw new InvalidRequestException("Invoice ID cannot be null");
-        }
-
-        return invoiceRepository.findById(invoiceId)
+    private Invoice findInvoice(Long organizationId, Long invoiceId) {
+        validateId(invoiceId, "Invoice");
+        return invoiceRepository.findByIdAndOrganizationId(invoiceId, organizationId)
                 .orElseThrow(() -> new ResourceNotFoundException("Invoice", "id", invoiceId));
     }
 
-    private void validatePaymentAmount(BigDecimal amount) {
-        if(amount == null){
-            throw new InvalidRequestException("Payment amount is required");
-        }
+    private void recalculate(Invoice invoice) {
+        BigDecimal paid = paymentRepository.findByInvoice_Id(invoice.getId()).stream()
+                .map(Payment::getAmount).filter(a -> a != null).reduce(BigDecimal.ZERO, BigDecimal::add);
+        invoice.setAmountPaid(paid);
+        calculationService.recalculateInvoiceTotals(invoice);
+        invoiceRepository.save(invoice);
+    }
 
-        if(amount.compareTo(BigDecimal.ZERO) <= 0){
+    private void validateInvoiceCanReceivePayment(Invoice invoice) {
+        if (invoice.getStatus() == InvoiceStatus.DRAFT || invoice.getStatus() == InvoiceStatus.CANCELLED || invoice.getStatus() == InvoiceStatus.PAID)
+            throw new InvalidResourceStateException("Invoice cannot receive a payment in its current state");
+    }
+
+    private void validateAmount(BigDecimal amount) {
+        if (amount == null || amount.compareTo(BigDecimal.ZERO) <= 0)
             throw new InvalidRequestException("Payment amount must be greater than zero");
-        }
     }
 
-    private void recalculateInvoicePayments(Invoice invoice) {
-        BigDecimal totalPaid = paymentRepository
-                .findByInvoiceId(invoice.getId())
-                .stream()
-                .map(Payment::getAmount)
-                .filter(amount -> amount != null)
-                .reduce(BigDecimal.ZERO, BigDecimal::add);
+    private void validateNotOverBalance(BigDecimal amount, BigDecimal balance) {
+        if (balance == null) throw new InvalidResourceStateException("Invoice balance has not been calculated");
+        if (amount.compareTo(balance) > 0) throw new BusinessRuleException("Payment amount cannot exceed the outstanding invoice balance");
+    }
 
-        invoice.setAmountPaid(totalPaid);
-
-        invoiceCalculationService.recalculateInvoiceTotals(invoice);
-
+    private void updateStatus(Invoice invoice) {
+        if (invoice.getAmountPaid().compareTo(BigDecimal.ZERO) == 0) invoice.setStatus(InvoiceStatus.SENT);
+        else if (invoice.getBalanceDue().compareTo(BigDecimal.ZERO) == 0) invoice.setStatus(InvoiceStatus.PAID);
+        else invoice.setStatus(InvoiceStatus.PARTIALLY_PAID);
         invoiceRepository.save(invoice);
-
     }
 
-    private void validateInvoiceCanReceivePayment(Invoice invoice){
-
-        if(invoice.getStatus() ==  InvoiceStatus.DRAFT){
-            throw new InvalidResourceStateException("A draft invoice cannot receive payments");
-        }
-
-        if(invoice.getStatus() == InvoiceStatus.CANCELLED){
-            throw new InvalidResourceStateException("A cancelled invoice cannot receive payments");
-        }
-
-        if(invoice.getStatus() == InvoiceStatus.PAID){
-            throw new InvalidResourceStateException("A paid invoice cannot receive another payment");
-        }
-    }
-
-    private void validatePaymentDoesNotExceedBalance(BigDecimal paymentAmount, BigDecimal balanceDue){
-
-        if(balanceDue == null){
-            throw new InvalidResourceStateException("Invalid balance has not been calculated");
-        }
-
-        if(paymentAmount.compareTo(balanceDue) > 0){
-            throw new BusinessRuleException("Payment amount cannot exceed" + "the outstanding invoice balance");
-        }
-    }
-
-    private void updateInvoicePaymentStatus(Invoice invoice){
-
-        if(invoice.getAmountPaid().compareTo(BigDecimal.ZERO) == 0){
-            invoice.setStatus(InvoiceStatus.SENT);
-        }else if (invoice.getBalanceDue().compareTo(BigDecimal.ZERO) == 0){
-            invoice.setStatus(InvoiceStatus.PAID);
-        }else{
-            invoice.setStatus(InvoiceStatus.PARTIALLY_PAID);
-        }
-
-        invoiceRepository.save(invoice);
+    private void validateId(Long id, String resource) {
+        if (id == null || id <= 0) throw new InvalidRequestException(resource + " id must be greater than zero");
     }
 }
