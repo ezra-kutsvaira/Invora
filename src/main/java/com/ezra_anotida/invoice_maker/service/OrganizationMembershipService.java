@@ -8,20 +8,13 @@ import org.springframework.data.domain.Pageable;
 
 public interface OrganizationMembershipService {
 
-    OrganizationMembershipResponse addMember(
-            Long organizationId,
-            CreateOrganizationMembershipRequest request
-    );
+    OrganizationMembershipResponse addMember(Long organizationId, CreateOrganizationMembershipRequest request);
 
     OrganizationMembershipResponse getMember(Long organizationId, Long membershipId);
 
     Page<OrganizationMembershipResponse> getMembers(Long organizationId, Pageable pageable);
 
-    OrganizationMembershipResponse updateMember(
-            Long organizationId,
-            Long membershipId,
-            UpdateOrganizationMembershipRequest request
-    );
+    OrganizationMembershipResponse updateMember(Long organizationId, Long membershipId, UpdateOrganizationMembershipRequest request);
 
     void removeMember(Long organizationId, Long membershipId);
 }

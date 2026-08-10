@@ -11,7 +11,8 @@ import java.util.List;
 @Mapper(componentModel = "spring")
 public interface CurrencyMapper {
 
-    @Mapping(target = "organization", ignore = true)\n    Currency toEntity(CreateCurrencyRequest request);
+    @Mapping(target = "organization", ignore = true)
+    Currency toEntity(CreateCurrencyRequest request);
 
     CurrencyResponse toResponse(Currency currency);
 

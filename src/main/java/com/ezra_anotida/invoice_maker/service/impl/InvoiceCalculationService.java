@@ -12,12 +12,15 @@ import java.math.BigDecimal;
 public class InvoiceCalculationService {
 
     public void recalculateInvoiceTotals(Invoice invoice) {
+
         validateInvoice(invoice);
 
         BigDecimal subtotal = calculateSubtotal(invoice);
 
         BigDecimal discountAmount = defaultToZero(invoice.getDiscountAmount());
+
         BigDecimal taxAmount = defaultToZero(invoice.getTaxAmount());
+
         BigDecimal amountPaid = defaultToZero(invoice.getAmountPaid());
 
         validateDiscountAmount(discountAmount, subtotal);
@@ -39,6 +42,7 @@ public class InvoiceCalculationService {
     }
 
     private BigDecimal calculateSubtotal(Invoice invoice) {
+
         if (invoice.getItems() == null || invoice.getItems().isEmpty()) {
             return BigDecimal.ZERO;
         }

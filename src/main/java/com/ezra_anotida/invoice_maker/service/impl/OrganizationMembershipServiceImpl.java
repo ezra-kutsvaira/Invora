@@ -30,25 +30,23 @@ public class OrganizationMembershipServiceImpl implements OrganizationMembership
     private final OrganizationRepository organizationRepository;
     private final UserRepository userRepository;
 
-    public OrganizationMembershipServiceImpl(
-            OrganizationMembershipRepository membershipRepository,
-            OrganizationRepository organizationRepository,
-            UserRepository userRepository
-    ) {
+    public OrganizationMembershipServiceImpl(OrganizationMembershipRepository membershipRepository, OrganizationRepository organizationRepository, UserRepository userRepository) {
         this.membershipRepository = membershipRepository;
         this.organizationRepository = organizationRepository;
         this.userRepository = userRepository;
     }
 
     @Override
-    public OrganizationMembershipResponse addMember(
-            Long organizationId,
-            CreateOrganizationMembershipRequest request
-    ) {
+    public OrganizationMembershipResponse addMember(Long organizationId, CreateOrganizationMembershipRequest request) {
+
         validateId(organizationId, "Organization");
-        if (request == null) throw new InvalidRequestException("Membership request is required");
+
+        if (request == null){
+            throw new InvalidRequestException("Membership request is required");
+        }
 
         Organization organization = findActiveOrganization(organizationId);
+
         User user = userRepository.findById(request.userId())
                 .orElseThrow(() -> new ResourceNotFoundException("User", "id", request.userId()));
 
@@ -57,10 +55,7 @@ public class OrganizationMembershipServiceImpl implements OrganizationMembership
         }
 
         if (membershipRepository.existsByOrganizationIdAndUserId(organizationId, user.getId())) {
-            throw new DuplicateResourceException(
-                    "Organization membership",
-                    "organizationId/userId",
-                    organizationId + "/" + user.getId()
+            throw new DuplicateResourceException("Organization membership", "organizationId/userId", organizationId + "/" + user.getId()
             );
         }
 
@@ -76,26 +71,26 @@ public class OrganizationMembershipServiceImpl implements OrganizationMembership
     @Override
     @Transactional(readOnly = true)
     public OrganizationMembershipResponse getMember(Long organizationId, Long membershipId) {
+
         return toResponse(findMembership(organizationId, membershipId));
     }
 
     @Override
     @Transactional(readOnly = true)
-    public Page<OrganizationMembershipResponse> getMembers(
-            Long organizationId,
-            Pageable pageable
-    ) {
+    public Page<OrganizationMembershipResponse> getMembers(Long organizationId, Pageable pageable) {
+
         findActiveOrganization(organizationId);
-        if (pageable == null) throw new InvalidRequestException("Pageable is required");
+
+        if (pageable == null) {
+            throw new InvalidRequestException("Pageable is required");
+        }
+
         return membershipRepository.findByOrganizationId(organizationId, pageable).map(this::toResponse);
     }
 
     @Override
-    public OrganizationMembershipResponse updateMember(
-            Long organizationId,
-            Long membershipId,
-            UpdateOrganizationMembershipRequest request
-    ) {
+    public OrganizationMembershipResponse updateMember(Long organizationId, Long membershipId, UpdateOrganizationMembershipRequest request) {
+
         if (request == null) throw new InvalidRequestException("Membership update request is required");
 
         OrganizationMembership membership = findMembership(organizationId, membershipId);
@@ -114,20 +109,29 @@ public class OrganizationMembershipServiceImpl implements OrganizationMembership
 
     @Override
     public void removeMember(Long organizationId, Long membershipId) {
+
         OrganizationMembership membership = findMembership(organizationId, membershipId);
+
         membership.setStatus(MembershipStatus.SUSPENDED);
+
         membershipRepository.save(membership);
     }
 
     private Organization findActiveOrganization(Long organizationId) {
+
         validateId(organizationId, "Organization");
+
         return organizationRepository.findByIdAndStatus(organizationId, OrganizationStatus.ACTIVE)
+
                 .orElseThrow(() -> new ResourceNotFoundException("Active organization", "id", organizationId));
     }
 
     private OrganizationMembership findMembership(Long organizationId, Long membershipId) {
+
         findActiveOrganization(organizationId);
+
         validateId(membershipId, "Membership");
+
         return membershipRepository.findByIdAndOrganizationId(membershipId, organizationId)
                 .orElseThrow(() -> new ResourceNotFoundException(
                         "Organization membership",

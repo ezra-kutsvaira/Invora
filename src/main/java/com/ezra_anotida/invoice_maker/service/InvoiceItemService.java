@@ -5,8 +5,12 @@ import java.util.List;
 
 public interface InvoiceItemService {
     InvoiceItemResponse addItemToInvoice(Long organizationId, Long invoiceId, CreateInvoiceItemRequest request);
+
     InvoiceItemResponse getInvoiceItemById(Long organizationId, Long invoiceItemId);
+
     List<InvoiceItemResponse> getItemsByInvoice(Long organizationId, Long invoiceId);
+
     InvoiceItemResponse updateInvoiceItem(Long organizationId, Long invoiceItemId, UpdateInvoiceItemRequest request);
+
     void removeInvoiceItem(Long organizationId, Long invoiceItemId);
 }

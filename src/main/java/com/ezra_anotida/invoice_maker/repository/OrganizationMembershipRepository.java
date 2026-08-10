@@ -20,9 +20,5 @@ public interface OrganizationMembershipRepository extends JpaRepository<Organiza
 
     Page<OrganizationMembership> findByOrganizationId(Long organizationId, Pageable pageable);
 
-    Page<OrganizationMembership> findByOrganizationIdAndStatus(
-            Long organizationId,
-            MembershipStatus status,
-            Pageable pageable
-    );
+    Page<OrganizationMembership> findByOrganizationIdAndStatus(Long organizationId, MembershipStatus status, Pageable pageable);
 }

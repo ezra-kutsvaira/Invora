@@ -53,7 +53,7 @@ public class OrganizationServiceImpl implements OrganizationService {
         organization.setSlug(normalizedSlug);
 
         organization.setStatus(OrganizationStatus.ACTIVE);
-        organization.setActive(true);
+
 
         Organization savedOrganization = organizationRepository.save(organization);
 
@@ -100,7 +100,7 @@ public class OrganizationServiceImpl implements OrganizationService {
         validatePageable(pageable);
 
         return organizationRepository
-                .findByActiveTrue(pageable)
+                .findByStatus(OrganizationStatus.ACTIVE, pageable)
                 .map(organizationMapper::toResponse);
     }
 
@@ -171,11 +171,14 @@ public class OrganizationServiceImpl implements OrganizationService {
 
         Organization organization = findOrganizationById(organizationId);
 
-        if (!Boolean.TRUE.equals(organization.getActive())) {
+        if(organization.getStatus() == OrganizationStatus.INACTIVE){
             throw new InvalidResourceStateException("Organization is already inactive");
         }
 
-        organization.setActive(false);
+        if(organization.getStatus() == OrganizationStatus.SUSPENDED){
+            throw new InvalidResourceStateException("A suspended organization cannot be deactived");
+        }
+
         organization.setStatus(OrganizationStatus.INACTIVE);
 
         organizationRepository.save(organization);
@@ -190,11 +193,10 @@ public class OrganizationServiceImpl implements OrganizationService {
             throw new InvalidResourceStateException("A suspended organization cannot be reactivated");
         }
 
-        if (Boolean.TRUE.equals(organization.getActive())) {
-            throw new InvalidResourceStateException("Organization is already active");
+        if(organization.getStatus() == OrganizationStatus.ACTIVE){
+            throw  new InvalidResourceStateException("Organization is already active");
         }
 
-        organization.setActive(true);
         organization.setStatus(OrganizationStatus.ACTIVE);
 
         Organization reactivatedOrganization = organizationRepository.save(organization);
@@ -211,7 +213,6 @@ public class OrganizationServiceImpl implements OrganizationService {
             throw new InvalidResourceStateException("Organization is already suspended");
         }
 
-        organization.setActive(false);
         organization.setStatus(OrganizationStatus.SUSPENDED);
 
         organizationRepository.save(organization);

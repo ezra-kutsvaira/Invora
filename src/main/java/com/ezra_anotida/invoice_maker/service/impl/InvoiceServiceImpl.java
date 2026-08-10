@@ -83,73 +83,116 @@ public class InvoiceServiceImpl implements InvoiceService {
 
     @Override
     public InvoiceResponse updateInvoice(Long organizationId, Long invoiceId, UpdateInvoiceRequest request) {
+
         Invoice invoice = findInvoice(organizationId, invoiceId);
+
         requireDraft(invoice);
+
         LocalDate invoiceDate = request.invoiceDate() != null ? request.invoiceDate() : invoice.getInvoiceDate();
+
         LocalDate dueDate = request.dueDate() != null ? request.dueDate() : invoice.getDueDate();
+
         validateDates(invoiceDate, dueDate);
-        if (request.customerId() != null) invoice.setCustomer(findActiveCustomer(organizationId, request.customerId()));
+
+        if (request.customerId() != null) {
+            invoice.setCustomer(findActiveCustomer(organizationId, request.customerId()));
+        }
+
         invoiceMapper.updateEntityRequest(request, invoice);
+
         bindItems(invoice);
+
         calculationService.recalculateInvoiceTotals(invoice);
+
         return invoiceMapper.toResponse(invoiceRepository.save(invoice));
     }
 
     @Override
     public InvoiceResponse issueInvoice(Long organizationId, Long invoiceId) {
+
         Invoice invoice = findInvoice(organizationId, invoiceId);
+
         requireDraft(invoice);
-        if (invoice.getItems() == null || invoice.getItems().isEmpty())
+
+        if (invoice.getItems() == null || invoice.getItems().isEmpty()){
             throw new BusinessRuleException("An invoice must contain at least one item");
+        }
+
         calculationService.recalculateInvoiceTotals(invoice);
+
         invoice.setStatus(InvoiceStatus.SENT);
+
         return invoiceMapper.toResponse(invoiceRepository.save(invoice));
     }
 
     @Override
     public InvoiceResponse cancelInvoice(Long organizationId, Long invoiceId) {
+
         Invoice invoice = findInvoice(organizationId, invoiceId);
-        if (invoice.getStatus() == InvoiceStatus.CANCELLED) throw new InvalidResourceStateException("Invoice is already cancelled");
-        if (invoice.getStatus() == InvoiceStatus.PAID) throw new InvalidResourceStateException("A paid invoice cannot be cancelled");
-        if (invoice.getAmountPaid() != null && invoice.getAmountPaid().compareTo(BigDecimal.ZERO) > 0)
+
+        if (invoice.getStatus() == InvoiceStatus.CANCELLED){
+            throw new InvalidResourceStateException("Invoice is already cancelled");
+        }
+
+        if (invoice.getStatus() == InvoiceStatus.PAID) {
+            throw new InvalidResourceStateException("A paid invoice cannot be cancelled");
+        }
+
+        if (invoice.getAmountPaid() != null && invoice.getAmountPaid().compareTo(BigDecimal.ZERO) > 0){
             throw new InvalidResourceStateException("An invoice with recorded payments cannot be cancelled");
+        }
+
         invoice.setStatus(InvoiceStatus.CANCELLED);
+
         return invoiceMapper.toResponse(invoiceRepository.save(invoice));
     }
 
     @Override
     public void deleteInvoice(Long organizationId, Long invoiceId) {
+
         Invoice invoice = findInvoice(organizationId, invoiceId);
+
         requireDraft(invoice);
+
         invoiceRepository.delete(invoice);
     }
 
     private Invoice findInvoice(Long organizationId, Long invoiceId) {
+
         findActiveOrganization(organizationId);
+
         validateId(invoiceId, "Invoice");
+
         return invoiceRepository.findByIdAndOrganizationId(invoiceId, organizationId)
                 .orElseThrow(() -> new ResourceNotFoundException("Invoice", "id", invoiceId));
     }
 
     private Customer findCustomer(Long organizationId, Long customerId) {
+
         validateId(customerId, "Customer");
+
         return customerRepository.findByIdAndOrganizationId(customerId, organizationId)
                 .orElseThrow(() -> new ResourceNotFoundException("Customer", "id", customerId));
     }
 
     private Customer findActiveCustomer(Long organizationId, Long customerId) {
+
         validateId(customerId, "Customer");
+
         return customerRepository.findByIdAndOrganizationIdAndActiveTrue(customerId, organizationId)
                 .orElseThrow(() -> new ResourceNotFoundException("Active customer", "id", customerId));
     }
 
     private Organization findActiveOrganization(Long organizationId) {
+
         validateId(organizationId, "Organization");
+
         return organizationRepository.findByIdAndStatus(organizationId, OrganizationStatus.ACTIVE)
                 .orElseThrow(() -> new ResourceNotFoundException("Active organization", "id", organizationId));
     }
 
     private String generateInvoiceNumber(Long organizationId) {
+
         String number;
         do {
             number = "INV-" + UUID.randomUUID().toString().substring(0, 8).toUpperCase();
@@ -158,7 +201,11 @@ public class InvoiceServiceImpl implements InvoiceService {
     }
 
     private void bindItems(Invoice invoice) {
-        if (invoice.getItems() == null) return;
+
+        if (invoice.getItems() == null){
+            return;
+        }
+
         for (InvoiceItem item : invoice.getItems()) {
             item.setInvoice(invoice);
             calculationService.calculateLineTotal(item);
@@ -166,16 +213,26 @@ public class InvoiceServiceImpl implements InvoiceService {
     }
 
     private void validateDates(LocalDate invoiceDate, LocalDate dueDate) {
-        if (invoiceDate == null || dueDate == null) throw new InvalidRequestException("Invoice date and due date are required");
-        if (dueDate.isBefore(invoiceDate)) throw new InvalidRequestException("Due date cannot be before invoice date");
+
+        if (invoiceDate == null || dueDate == null) {
+            throw new InvalidRequestException("Invoice date and due date are required");
+        }
+
+        if (dueDate.isBefore(invoiceDate)) {
+            throw new InvalidRequestException("Due date cannot be before invoice date");
+        }
     }
 
     private void requireDraft(Invoice invoice) {
-        if (invoice.getStatus() != InvoiceStatus.DRAFT)
+        if (invoice.getStatus() != InvoiceStatus.DRAFT){
             throw new InvalidResourceStateException("Only draft invoices can be modified");
+        }
+
     }
 
     private void validateId(Long id, String resource) {
-        if (id == null || id <= 0) throw new InvalidRequestException(resource + " id must be greater than zero");
+        if (id == null || id <= 0) {
+            throw new InvalidRequestException(resource + " id must be greater than zero");
+        }
     }
 }

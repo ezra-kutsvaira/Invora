@@ -6,6 +6,8 @@ import java.util.List;
 import java.util.Optional;
 
 public interface InvoiceItemRepository extends JpaRepository<InvoiceItem, Long> {
+
     Optional<InvoiceItem> findByIdAndInvoice_Organization_Id(Long itemId, Long organizationId);
+
     List<InvoiceItem> findByInvoice_Organization_IdAndInvoice_Id(Long organizationId, Long invoiceId);
 }
