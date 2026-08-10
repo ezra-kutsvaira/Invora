@@ -7,7 +7,7 @@ import com.ezra_anotida.invoice_maker.dto.product.UpdateProductRequest;
 import com.ezra_anotida.invoice_maker.entity.Product;
 import org.mapstruct.BeanMapping;
 import org.mapstruct.Mapper;
-import org.mapstruct.MappingTarget;
+import org.mapstruct.Mapping;\nimport org.mapstruct.MappingTarget;
 import org.mapstruct.NullValuePropertyMappingStrategy;
 
 import java.util.List;
@@ -15,7 +15,7 @@ import java.util.List;
 @Mapper(componentModel = "spring")
 public interface ProductMapper {
 
-    Product toEntity (CreateProductRequest request);
+    @Mapping(target = "organization", ignore = true)\n    Product toEntity (CreateProductRequest request);
 
     ProductResponse toResponse(Product product);
 
