@@ -97,5 +97,14 @@ import java.time.LocalDateTime;
         public void setPerformedBy(String performedBy) {
             this.performedBy = performedBy;
         }
-    }
+    
+        public Organization getOrganization() {
+            return organization;
+        }
+
+        public void setOrganization(Organization organization) {
+            this.organization = organization;
+        }
+
+}
 
