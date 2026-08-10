@@ -1,212 +1,141 @@
 package com.ezra_anotida.invoice_maker.service.impl;
 
-import com.ezra_anotida.invoice_maker.exception.DuplicateResourceException;
-import com.ezra_anotida.invoice_maker.exception.InvalidRequestException;
-import com.ezra_anotida.invoice_maker.exception.ResourceNotFoundException;
-import com.ezra_anotida.invoice_maker.dto.product.CreateProductRequest;
-import com.ezra_anotida.invoice_maker.dto.product.ProductResponse;
-import com.ezra_anotida.invoice_maker.dto.product.ProductSummaryResponse;
-import com.ezra_anotida.invoice_maker.dto.product.UpdateProductRequest;
+import com.ezra_anotida.invoice_maker.dto.product.*;
+import com.ezra_anotida.invoice_maker.entity.Organization;
 import com.ezra_anotida.invoice_maker.entity.Product;
+import com.ezra_anotida.invoice_maker.enums.OrganizationStatus;
+import com.ezra_anotida.invoice_maker.exception.*;
 import com.ezra_anotida.invoice_maker.mapper.ProductMapper;
-import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
+import com.ezra_anotida.invoice_maker.repository.OrganizationRepository;
 import com.ezra_anotida.invoice_maker.repository.ProductRepository;
 import com.ezra_anotida.invoice_maker.service.ProductService;
-
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 import java.math.BigDecimal;
 import java.util.List;
 
 @Service
 @Transactional
 public class ProductServiceImpl implements ProductService {
-
     private final ProductRepository productRepository;
+    private final OrganizationRepository organizationRepository;
     private final ProductMapper productMapper;
 
-    public ProductServiceImpl(ProductRepository productRepository, ProductMapper productMapper) {
+    public ProductServiceImpl(ProductRepository productRepository, OrganizationRepository organizationRepository, ProductMapper productMapper) {
         this.productRepository = productRepository;
+        this.organizationRepository = organizationRepository;
         this.productMapper = productMapper;
     }
 
     @Override
-    public ProductResponse createProduct(CreateProductRequest request) {
-
-        validateUniqueName(request.name(), null);
+    public ProductResponse createProduct(Long organizationId, CreateProductRequest request) {
+        Organization organization = findActiveOrganization(organizationId);
+        validateUniqueName(organizationId, request.name(), null);
         validatePrice(request.unitPrice());
-        validateStockQuantity(request.stockQuantity());
-
-
+        validateStock(request.stockQuantity());
         Product product = productMapper.toEntity(request);
+        product.setOrganization(organization);
+        product.setActive(true);
+        if (product.getStockQuantity() == null) product.setStockQuantity(0);
+        return productMapper.toResponse(productRepository.save(product));
+    }
 
-        //Active status
-        if(product.getActive() == null){
-            product.setActive(true);
-        }
+    @Override @Transactional(readOnly = true)
+    public ProductResponse getProductById(Long organizationId, Long productId) {
+        return productMapper.toResponse(findProduct(organizationId, productId));
+    }
 
-        if(product.getStockQuantity() == null){
-            product.setStockQuantity(0);
-        }
+    @Override @Transactional(readOnly = true)
+    public List<ProductResponse> getAllProducts(Long organizationId) {
+        findActiveOrganization(organizationId);
+        return productMapper.toResponseList(productRepository.findByOrganizationId(organizationId));
+    }
 
-        Product savedProduct = productRepository.save(product);
-
-        return productMapper.toResponse(savedProduct);
+    @Override @Transactional(readOnly = true)
+    public List<ProductSummaryResponse> getProductSummaries(Long organizationId) {
+        findActiveOrganization(organizationId);
+        return productMapper.toSummaryResponseList(productRepository.findByOrganizationIdAndActiveTrue(organizationId));
     }
 
     @Override
-    @Transactional(readOnly = true)
-    public ProductResponse getProductById(Long productId) {
-
-        Product product = findProductById(productId);
-
-        return productMapper.toResponse(product);
+    public ProductResponse updateProduct(Long organizationId, Long productId, UpdateProductRequest request) {
+        Product product = findProduct(organizationId, productId);
+        validateUniqueName(organizationId, request.name(), product);
+        if (request.unitPrice() != null) validatePrice(request.unitPrice());
+        validateStock(request.stockQuantity());
+        productMapper.updateToEntityFromRequest(request, product);
+        return productMapper.toResponse(productRepository.save(product));
     }
 
     @Override
-    @Transactional(readOnly = true)
-    public List<ProductResponse> getAllProducts() {
-
-        List<Product> products = productRepository.findAll();
-
-        return productMapper.toResponseList(products);
-    }
-
-    @Override
-    public List<ProductSummaryResponse> getProductSummaries() {
-
-        List<Product> products = productRepository.findByActiveTrue();
-
-        return productMapper.toSummaryResponseList(products);
-    }
-
-    @Override
-    public ProductResponse updateProduct(Long productId, UpdateProductRequest request) {
-
-        //find the product
-        Product existingProduct = findProductById(productId);
-
-        validateUniqueName(request.name(), existingProduct);
-
-        if(request.unitPrice()!=null){
-            validatePrice(request.unitPrice());
-        }
-
-        if(request.stockQuantity() != null){
-            validateStockQuantity(request.stockQuantity());
-        }
-
-        productMapper.updateToEntityFromRequest(request, existingProduct);
-
-        Product updatedProduct = productRepository.save(existingProduct);
-
-        return  productMapper.toResponse(updatedProduct) ;
-    }
-
-
-    @Override
-    public void deleteProduct(Long productId) {
-
-        Product product =  findProductById(productId);
-
+    public void deleteProduct(Long organizationId, Long productId) {
+        Product product = findProduct(organizationId, productId);
         product.setActive(false);
-
         productRepository.save(product);
-
     }
 
-    @Override
-    @Transactional(readOnly = true)
-    public List<ProductResponse> searchProducts(String keyword) {
-
-        if(keyword == null || keyword.isBlank()){
-            throw new InvalidRequestException("Keyword cannot be empty");
-
-        }
-
-        List<Product> products = productRepository.findByProductNameContainingIgnoreCase(keyword.trim());
-        return productMapper.toResponseList(products);
+    @Override @Transactional(readOnly = true)
+    public List<ProductResponse> searchProducts(Long organizationId, String keyword) {
+        findActiveOrganization(organizationId);
+        if (keyword == null || keyword.isBlank()) throw new InvalidRequestException("Keyword cannot be empty");
+        return productMapper.toResponseList(productRepository.findByOrganizationIdAndProductNameContainingIgnoreCase(organizationId, keyword.trim()));
     }
 
-    @Override
-    @Transactional(readOnly = true)
-    public List<ProductResponse> getProductsByCategory(String category) {
-
-        //Work on Null Pointers
-        if(category == null || category.isBlank()){
-            throw new InvalidRequestException("Category cannot be empty");
-        }
-        List<Product> products = productRepository.findByCategoryIgnoreCase(category.trim());
-
-        return productMapper.toResponseList(products);
+    @Override @Transactional(readOnly = true)
+    public List<ProductResponse> getProductsByCategory(Long organizationId, String category) {
+        findActiveOrganization(organizationId);
+        validateCategory(category);
+        return productMapper.toResponseList(productRepository.findByOrganizationIdAndCategoryIgnoreCase(organizationId, category.trim()));
     }
 
-    @Override
-    @Transactional(readOnly = true)
-    public List<ProductResponse> getAllActiveProducts() {
-
-        List<Product> products = productRepository.findByActiveTrue();
-
-        return productMapper.toResponseList(products);
+    @Override @Transactional(readOnly = true)
+    public List<ProductResponse> getAllActiveProducts(Long organizationId) {
+        findActiveOrganization(organizationId);
+        return productMapper.toResponseList(productRepository.findByOrganizationIdAndActiveTrue(organizationId));
     }
 
-    @Override
-    @Transactional(readOnly = true)
-    public List<ProductResponse> getAllActiveProductsByCategory(String category) {
-
-        if(category == null || category.isBlank()){
-            throw new InvalidRequestException("Category cannot be empty");
-        }
-        List<Product> products = productRepository.findByActiveTrueAndCategoryIgnoreCase(category.trim());
-
-        return productMapper.toResponseList(products);
+    @Override @Transactional(readOnly = true)
+    public List<ProductResponse> getAllActiveProductsByCategory(Long organizationId, String category) {
+        findActiveOrganization(organizationId);
+        validateCategory(category);
+        return productMapper.toResponseList(productRepository.findByOrganizationIdAndActiveTrueAndCategoryIgnoreCase(organizationId, category.trim()));
     }
 
-    //Helper Methods
-    @Transactional(readOnly = true)
-    private Product findProductById(Long productId) {
-        if(productId == null){
-            throw new InvalidRequestException("Product ID cannot be null");
-        }
-
-        return productRepository.findById(productId)
+    private Product findProduct(Long organizationId, Long productId) {
+        findActiveOrganization(organizationId);
+        validateId(productId, "Product");
+        return productRepository.findByIdAndOrganizationId(productId, organizationId)
                 .orElseThrow(() -> new ResourceNotFoundException("Product", "id", productId));
     }
 
-    private void validateUniqueName (String name, Product existingProduct) {
-        if(name == null || name.isBlank()){
-            return;
-        }
+    private Organization findActiveOrganization(Long organizationId) {
+        validateId(organizationId, "Organization");
+        return organizationRepository.findByIdAndStatus(organizationId, OrganizationStatus.ACTIVE)
+                .orElseThrow(() -> new ResourceNotFoundException("Active organization", "id", organizationId));
+    }
 
-        String normalizedName = name.trim();
-
-
-        boolean nameBelongsToCurrentProduct = existingProduct != null && existingProduct.getProductName() != null && existingProduct.getProductName().equalsIgnoreCase(normalizedName);
-
-        if(!nameBelongsToCurrentProduct && productRepository.existByProductNameIgnoreCase(name)){
+    private void validateUniqueName(Long organizationId, String name, Product existing) {
+        if (name == null || name.isBlank()) return;
+        String normalized = name.trim();
+        boolean unchanged = existing != null && existing.getProductName() != null && existing.getProductName().equalsIgnoreCase(normalized);
+        if (!unchanged && productRepository.existsByOrganizationIdAndProductNameIgnoreCase(organizationId, normalized))
             throw new DuplicateResourceException("Product", "name", name);
-        }
-
     }
 
-    private void validatePrice(BigDecimal price){
-        if(price == null){
-            throw new InvalidRequestException("Price cannot be null");
-        }
-
-        if(price.compareTo(BigDecimal.ZERO) <= 0){
+    private void validatePrice(BigDecimal price) {
+        if (price == null || price.compareTo(BigDecimal.ZERO) <= 0)
             throw new InvalidRequestException("Price must be greater than zero");
-        }
     }
 
-    private void validateStockQuantity(Integer stockQuantity){
-        if (stockQuantity == null) {
-            return;
-        }
-
-        if(stockQuantity < 0){
-            throw new InvalidRequestException("Stock quantity cannot be negative");
-        }
+    private void validateStock(Integer stock) {
+        if (stock != null && stock < 0) throw new InvalidRequestException("Stock quantity cannot be negative");
     }
 
+    private void validateCategory(String category) {
+        if (category == null || category.isBlank()) throw new InvalidRequestException("Category cannot be empty");
+    }
 
+    private void validateId(Long id, String resource) {
+        if (id == null || id <= 0) throw new InvalidRequestException(resource + " id must be greater than zero");
+    }
 }
