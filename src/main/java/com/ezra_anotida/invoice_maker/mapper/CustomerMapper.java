@@ -7,7 +7,7 @@ import com.ezra_anotida.invoice_maker.dto.customer.UpdateCustomerRequest;
 import com.ezra_anotida.invoice_maker.entity.Customer;
 import org.mapstruct.BeanMapping;
 import org.mapstruct.Mapper;
-import org.mapstruct.MappingTarget;
+import org.mapstruct.Mapping;\nimport org.mapstruct.MappingTarget;
 import org.mapstruct.NullValuePropertyMappingStrategy;
 
 import java.util.List;
@@ -16,7 +16,7 @@ import java.util.List;
 public interface CustomerMapper {
 
     //start with the one you are converting into
-    Customer toEntity(CreateCustomerRequest request);
+    @Mapping(target = "organization", ignore = true)\n    Customer toEntity(CreateCustomerRequest request);
 
     CustomerResponse toResponse(Customer customer);
 
