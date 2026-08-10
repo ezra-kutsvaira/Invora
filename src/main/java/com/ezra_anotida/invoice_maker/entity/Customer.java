@@ -10,7 +10,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 @Entity
-@Table(name = "customers")
+@Table(name = "customers", uniqueConstraints = @UniqueConstraint(name = "uk_customers_org_email", columnNames = {"organization_id", "email"}))
 public class Customer {
 
     @Id
@@ -179,4 +179,13 @@ public class Customer {
     public void setInvoices(List<Invoice> invoices) {
         this.invoices = invoices;
     }
+
+    public Organization getOrganization() {
+        return organization;
+    }
+
+    public void setOrganization(Organization organization) {
+        this.organization = organization;
+    }
+
 }
