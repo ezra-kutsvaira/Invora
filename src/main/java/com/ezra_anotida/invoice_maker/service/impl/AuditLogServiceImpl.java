@@ -1,191 +1,109 @@
 package com.ezra_anotida.invoice_maker.service.impl;
 
-import com.ezra_anotida.invoice_maker.dto.audit.AuditLogResponse;
-import com.ezra_anotida.invoice_maker.dto.audit.CreateAuditLogRequest;
+import com.ezra_anotida.invoice_maker.dto.audit.*;
 import com.ezra_anotida.invoice_maker.entity.AuditLog;
-import com.ezra_anotida.invoice_maker.exception.InvalidRequestException;
-import com.ezra_anotida.invoice_maker.exception.ResourceNotFoundException;
+import com.ezra_anotida.invoice_maker.entity.Organization;
+import com.ezra_anotida.invoice_maker.enums.OrganizationStatus;
+import com.ezra_anotida.invoice_maker.exception.*;
 import com.ezra_anotida.invoice_maker.mapper.AuditLogMapper;
 import com.ezra_anotida.invoice_maker.repository.AuditLogRepository;
+import com.ezra_anotida.invoice_maker.repository.OrganizationRepository;
 import com.ezra_anotida.invoice_maker.service.AuditLogService;
-import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-
-
-import javax.swing.*;
 import java.time.LocalDateTime;
 import java.util.List;
 
 @Service
 @Transactional
-
 public class AuditLogServiceImpl implements AuditLogService {
-
     private static final int MAX_ACTION_LENGTH = 100;
     private static final int MAX_ENTITY_NAME_LENGTH = 100;
     private static final int MAX_DESCRIPTION_LENGTH = 2000;
+    private final AuditLogMapper mapper;
+    private final AuditLogRepository repository;
+    private final OrganizationRepository organizationRepository;
 
-    private final AuditLogMapper auditLogMapper;
-    private final AuditLogRepository auditLogRepository;
-
-    public AuditLogServiceImpl(AuditLogMapper auditLogMapper, AuditLogRepository auditLogRepository) {
-        this.auditLogMapper = auditLogMapper;
-        this.auditLogRepository = auditLogRepository;
+    public AuditLogServiceImpl(AuditLogMapper mapper, AuditLogRepository repository, OrganizationRepository organizationRepository) {
+        this.mapper = mapper;
+        this.repository = repository;
+        this.organizationRepository = organizationRepository;
     }
 
     @Override
-    public void logAction(String action, String entityType, Long entityId, String details) {
-
-        String normalizedAction = validateAndNormalizeRequiredText(action, "Action" , MAX_ACTION_LENGTH);
-
-        String normalizedEntityName = validateAndNormalizeRequiredText(entityType, "Entity type" , MAX_ENTITY_NAME_LENGTH);
-
-        validateOptionalEntityId(entityId);
-
-        String normalizedDescription  = normalizeOptionalText(details, "Details" , MAX_DESCRIPTION_LENGTH);
-
-        CreateAuditLogRequest request = new CreateAuditLogRequest(normalizedAction, normalizedEntityName, entityId, normalizedDescription, "SYSTEM");
-
-        AuditLog auditLog = auditLogMapper.toEntity(request);
-
-        auditLogRepository.save(auditLog);
+    public void logAction(Long organizationId, String action, String entityType, Long entityId, String details) {
+        Organization organization = findActiveOrganization(organizationId);
+        String normalizedAction = requiredText(action, "Action", MAX_ACTION_LENGTH);
+        String normalizedEntity = requiredText(entityType, "Entity type", MAX_ENTITY_NAME_LENGTH);
+        if (entityId != null && entityId <= 0) throw new InvalidRequestException("Entity id must be greater than zero");
+        String normalizedDetails = optionalText(details, "Details", MAX_DESCRIPTION_LENGTH);
+        AuditLog log = mapper.toEntity(new CreateAuditLogRequest(normalizedAction, normalizedEntity, entityId, normalizedDetails, "SYSTEM"));
+        log.setOrganization(organization);
+        repository.save(log);
     }
 
-
-    @Override
-    @Transactional(readOnly = true)
-    public AuditLogResponse getAuditLogById(Long auditLogId) {
-
-        AuditLog auditLog = findAuditLogById(auditLogId);
-
-        return auditLogMapper.toResponse(auditLog);
+    @Override @Transactional(readOnly = true)
+    public AuditLogResponse getAuditLogById(Long organizationId, Long auditLogId) {
+        return mapper.toResponse(findLog(organizationId, auditLogId));
     }
 
-
-    @Override
-    @Transactional(readOnly = true)
-    public List<AuditLogResponse> getAllAuditLogs() {
-
-        List<AuditLog> auditLogs = auditLogRepository.findAll(Sort.by(Sort.Direction.DESC,"createdAt"));
-
-        return auditLogMapper.toResponseList(auditLogs);
+    @Override @Transactional(readOnly = true)
+    public List<AuditLogResponse> getAllAuditLogs(Long organizationId) {
+        findActiveOrganization(organizationId);
+        return mapper.toResponseList(repository.findByOrganizationIdOrderByCreatedAtDesc(organizationId));
     }
 
-    @Override
-    public List<AuditLogResponse> getAuditLogsByEntity(String entityType, Long entityId) {
-
-      String normalizedEntityName = validateAndNormalizeRequiredText(entityType, "Entity type" , MAX_ENTITY_NAME_LENGTH);
-
-      validateRequiredId(entityId, "Entity ID");
-
-      List<AuditLog> auditLogs = auditLogRepository.findByEntityNameIgnoreCaseAndEntityIdOrderByCreatedAtDesc(normalizedEntityName, entityId);
-
-        return auditLogMapper.toResponseList(auditLogs);
+    @Override @Transactional(readOnly = true)
+    public List<AuditLogResponse> getAuditLogsByEntity(Long organizationId, String entityType, Long entityId) {
+        findActiveOrganization(organizationId);
+        String entity = requiredText(entityType, "Entity type", MAX_ENTITY_NAME_LENGTH);
+        validateId(entityId, "Entity");
+        return mapper.toResponseList(repository.findByOrganizationIdAndEntityNameIgnoreCaseAndEntityIdOrderByCreatedAtDesc(organizationId, entity, entityId));
     }
 
-
-
-    @Override
-    public List<AuditLogResponse> getAuditLogsByAction(String action) {
-
-        String normalizedAction = validateAndNormalizeRequiredText(action, "Action", MAX_ACTION_LENGTH);
-
-        List<AuditLog> auditLogs = auditLogRepository.findByActionIgnoreCaseOrderByCreatedAtDesc(normalizedAction);
-
-        return auditLogMapper.toResponseList(auditLogs);
+    @Override @Transactional(readOnly = true)
+    public List<AuditLogResponse> getAuditLogsByAction(Long organizationId, String action) {
+        findActiveOrganization(organizationId);
+        String normalized = requiredText(action, "Action", MAX_ACTION_LENGTH);
+        return mapper.toResponseList(repository.findByOrganizationIdAndActionIgnoreCaseOrderByCreatedAtDesc(organizationId, normalized));
     }
 
-    @Override
-    public List<AuditLogResponse> getAuditLogsBetween(LocalDateTime startDate, LocalDateTime endDate) {
-
-        validateDateRange(startDate, endDate);
-
-        List<AuditLog> auditLogs = auditLogRepository.findByCreatedAtBetweenOrderByCreatedAtDesc(startDate, endDate);
-
-        return auditLogMapper.toResponseList(auditLogs);
+    @Override @Transactional(readOnly = true)
+    public List<AuditLogResponse> getAuditLogsBetween(Long organizationId, LocalDateTime startDate, LocalDateTime endDate) {
+        findActiveOrganization(organizationId);
+        if (startDate == null || endDate == null) throw new InvalidRequestException("Start and end dates are required");
+        if (startDate.isAfter(endDate)) throw new InvalidRequestException("Start date cannot be after end date");
+        return mapper.toResponseList(repository.findByOrganizationIdAndCreatedAtBetweenOrderByCreatedAtDesc(organizationId, startDate, endDate));
     }
 
-
-    //HELPER METHODS
-    private AuditLog findAuditLogById(Long auditLogId) {
-        validateRequiredId(auditLogId, "Audit Log Id");
-
-        return auditLogRepository.findById(auditLogId)
-                .orElseThrow(() -> new ResourceNotFoundException("AuditLog", "id", auditLogId));
+    private AuditLog findLog(Long organizationId, Long auditLogId) {
+        findActiveOrganization(organizationId);
+        validateId(auditLogId, "Audit log");
+        return repository.findByIdAndOrganizationId(auditLogId, organizationId)
+                .orElseThrow(() -> new ResourceNotFoundException("Audit log", "id", auditLogId));
     }
 
-
-    private void validateRequiredId(Long id, String fieldName) {
-
-        if(id == null){
-            throw new InvalidRequestException(fieldName + "cannot be null");
-        }
-
-        if(id <= 0){
-            throw new InvalidRequestException(fieldName );
-        }
-
+    private Organization findActiveOrganization(Long organizationId) {
+        validateId(organizationId, "Organization");
+        return organizationRepository.findByIdAndStatus(organizationId, OrganizationStatus.ACTIVE)
+                .orElseThrow(() -> new ResourceNotFoundException("Active organization", "id", organizationId));
     }
 
-    private void validateOptionalEntityId(Long entityId) {
-
-        if(entityId != null && entityId <= 0){
-            throw new InvalidRequestException("Entity Id must be greater than zero");
-        }
+    private String requiredText(String value, String field, int max) {
+        if (value == null || value.isBlank()) throw new InvalidRequestException(field + " cannot be blank");
+        String normalized = value.trim();
+        if (normalized.length() > max) throw new InvalidRequestException(field + " cannot exceed " + max + " characters");
+        return normalized;
     }
 
-    private String validateAndNormalizeRequiredText(String value, String fieldName, int maximumLength) {
-
-        if(value == null || value.isBlank()){
-            throw new InvalidRequestException(fieldName + "cannot be null or blank");
-        }
-
-        String normalizedValue = value.trim();
-
-        if (normalizedValue.length() > maximumLength) {
-            throw new InvalidRequestException(fieldName + " cannot exceed " + maximumLength + " characters");
-        }
-
-        return normalizedValue;
+    private String optionalText(String value, String field, int max) {
+        if (value == null || value.isBlank()) return null;
+        String normalized = value.trim();
+        if (normalized.length() > max) throw new InvalidRequestException(field + " cannot exceed " + max + " characters");
+        return normalized;
     }
 
-
-    private String normalizeOptionalText(String value, String fieldName, int maximumLength) {
-        if (value == null || value.isBlank()) {
-            throw new InvalidRequestException(
-                    fieldName + " cannot be null or blank"
-            );
-        }
-
-        String normalizedValue = value.trim();
-
-        if (normalizedValue.length() > maximumLength) {
-            throw new InvalidRequestException(
-                    fieldName + " cannot exceed "
-                            + maximumLength
-                            + " characters"
-            );
-        }
-
-        return normalizedValue;
+    private void validateId(Long id, String resource) {
+        if (id == null || id <= 0) throw new InvalidRequestException(resource + " id must be greater than zero");
     }
-
-
-    private void validateDateRange(LocalDateTime startDate, LocalDateTime endDate) {
-
-        if(startDate == null){
-            throw new InvalidRequestException("Start Date cannot be null");
-        }
-
-        if(endDate == null){
-            throw new InvalidRequestException("End Date cannot be null");
-        }
-
-        if(startDate.isAfter(endDate)){
-            throw new InvalidRequestException("Start date cannot be after the end date");
-        }
-
-    }
-
 }
