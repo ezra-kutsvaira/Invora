@@ -1,32 +1,17 @@
 package com.ezra_anotida.invoice_maker.service;
 
-import com.ezra_anotida.invoice_maker.dto.product.CreateProductRequest;
-import com.ezra_anotida.invoice_maker.dto.product.ProductResponse;
-import com.ezra_anotida.invoice_maker.dto.product.ProductSummaryResponse;
-import com.ezra_anotida.invoice_maker.dto.product.UpdateProductRequest;
-
+import com.ezra_anotida.invoice_maker.dto.product.*;
 import java.util.List;
 
 public interface ProductService {
-
-    ProductResponse createProduct(CreateProductRequest request);
-
-    ProductResponse getProductById(Long productId);
-
-    List<ProductResponse> getAllProducts();
-
-    List<ProductSummaryResponse> getProductSummaries();
-
-    ProductResponse updateProduct(Long productId, UpdateProductRequest request);
-
-    void deleteProduct(Long productId);
-
-    List<ProductResponse> searchProducts(String keyword);
-
-    List<ProductResponse> getProductsByCategory(String category);
-
-    List<ProductResponse> getAllActiveProducts();
-
-    List<ProductResponse> getAllActiveProductsByCategory(String category);
-
+    ProductResponse createProduct(Long organizationId, CreateProductRequest request);
+    ProductResponse getProductById(Long organizationId, Long productId);
+    List<ProductResponse> getAllProducts(Long organizationId);
+    List<ProductSummaryResponse> getProductSummaries(Long organizationId);
+    ProductResponse updateProduct(Long organizationId, Long productId, UpdateProductRequest request);
+    void deleteProduct(Long organizationId, Long productId);
+    List<ProductResponse> searchProducts(Long organizationId, String keyword);
+    List<ProductResponse> getProductsByCategory(Long organizationId, String category);
+    List<ProductResponse> getAllActiveProducts(Long organizationId);
+    List<ProductResponse> getAllActiveProductsByCategory(Long organizationId, String category);
 }
