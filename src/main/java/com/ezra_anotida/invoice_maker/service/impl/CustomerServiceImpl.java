@@ -1,176 +1,127 @@
 package com.ezra_anotida.invoice_maker.service.impl;
 
-import com.ezra_anotida.invoice_maker.exception.DuplicateResourceException;
-import com.ezra_anotida.invoice_maker.exception.InvalidRequestException;
-import com.ezra_anotida.invoice_maker.exception.InvalidResourceStateException;
-import com.ezra_anotida.invoice_maker.exception.ResourceNotFoundException;
-import com.ezra_anotida.invoice_maker.dto.customer.CreateCustomerRequest;
-import com.ezra_anotida.invoice_maker.dto.customer.CustomerResponse;
-import com.ezra_anotida.invoice_maker.dto.customer.CustomerSummaryResponse;
-import com.ezra_anotida.invoice_maker.dto.customer.UpdateCustomerRequest;
+import com.ezra_anotida.invoice_maker.dto.customer.*;
 import com.ezra_anotida.invoice_maker.entity.Customer;
+import com.ezra_anotida.invoice_maker.entity.Organization;
+import com.ezra_anotida.invoice_maker.enums.OrganizationStatus;
+import com.ezra_anotida.invoice_maker.exception.*;
 import com.ezra_anotida.invoice_maker.mapper.CustomerMapper;
+import com.ezra_anotida.invoice_maker.repository.CustomerRepository;
+import com.ezra_anotida.invoice_maker.repository.OrganizationRepository;
+import com.ezra_anotida.invoice_maker.service.CustomerService;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import com.ezra_anotida.invoice_maker.repository.CustomerRepository;
-import com.ezra_anotida.invoice_maker.service.CustomerService;
-
 import java.util.List;
-
 
 @Service
 @Transactional
 public class CustomerServiceImpl implements CustomerService {
-
     private final CustomerRepository customerRepository;
+    private final OrganizationRepository organizationRepository;
     private final CustomerMapper customerMapper;
 
-    public CustomerServiceImpl(CustomerRepository customerRepository, CustomerMapper customerMapper) {
+    public CustomerServiceImpl(CustomerRepository customerRepository, OrganizationRepository organizationRepository, CustomerMapper customerMapper) {
         this.customerRepository = customerRepository;
+        this.organizationRepository = organizationRepository;
         this.customerMapper = customerMapper;
     }
 
-
     @Override
-    public CustomerResponse createCustomer(CreateCustomerRequest request) {
-        //validation
-        validateUniqueEmail(request.email(),null);
-        validateUniquePhone(request.phone(), null);
+    public CustomerResponse createCustomer(Long organizationId, CreateCustomerRequest request) {
+        Organization organization = findActiveOrganization(organizationId);
+        validateUniqueEmail(organizationId, request.email(), null);
+        validateUniquePhone(organizationId, request.phone(), null);
+        Customer customer = customerMapper.toEntity(request);
+        customer.setOrganization(organization);
+        customer.setActive(true);
+        return customerMapper.toResponse(customerRepository.save(customer));
+    }
 
-        Customer customer  = customerMapper.toEntity(request);
-        Customer savedCustomer = customerRepository.save(customer);
+    @Override @Transactional(readOnly = true)
+    public CustomerResponse getCustomerById(Long organizationId, Long customerId) {
+        return customerMapper.toResponse(findCustomer(organizationId, customerId));
+    }
 
-        return customerMapper.toResponse(savedCustomer);
+    @Override @Transactional(readOnly = true)
+    public List<CustomerResponse> getAllCustomers(Long organizationId) {
+        findActiveOrganization(organizationId);
+        return customerMapper.toResponseList(customerRepository.findByOrganizationIdAndActiveTrue(organizationId));
+    }
+
+    @Override @Transactional(readOnly = true)
+    public List<CustomerSummaryResponse> getCustomerSummaries(Long organizationId) {
+        findActiveOrganization(organizationId);
+        return customerMapper.toSummaryResponseList(customerRepository.findByOrganizationIdAndActiveTrue(organizationId));
     }
 
     @Override
-    @Transactional(readOnly = true)
-    public CustomerResponse getCustomerById(Long customerId) {
-        Customer customer = findCustomerById(customerId);
-
-        return customerMapper.toResponse(customer);
+    public CustomerResponse updateCustomer(Long organizationId, Long customerId, UpdateCustomerRequest request) {
+        Customer customer = findCustomer(organizationId, customerId);
+        validateUniqueEmail(organizationId, request.email(), customer);
+        validateUniquePhone(organizationId, request.phone(), customer);
+        customerMapper.updateEntityFromRequest(request, customer);
+        return customerMapper.toResponse(customerRepository.save(customer));
     }
 
     @Override
-    @Transactional(readOnly = true)
-    public List<CustomerResponse> getAllCustomers() {
-
-        //returning only active customers
-        List<Customer> customers = customerRepository.findByActiveTrue();
-
-        return customerMapper.toResponseList(customers);
-
-    }
-
-    @Override
-    @Transactional(readOnly = true)
-    public List<CustomerSummaryResponse> getCustomerSummaries() {
-        List<Customer> customers = customerRepository.findByActiveTrue();
-        return customerMapper.toSummaryResponseList(customers);
-    }
-
-    @Override
-    public CustomerResponse updateCustomer(Long customerId, UpdateCustomerRequest request) {
-        Customer existingCustomer = findCustomerById(customerId);
-
-        validateUniqueEmail(request.email(), existingCustomer);
-
-        validateUniquePhone(request.phone(), existingCustomer);
-
-        customerMapper.updateEntityFromRequest(request,existingCustomer);
-
-        Customer updatedCustomer = customerRepository.save(existingCustomer);
-
-        return customerMapper.toResponse(updatedCustomer);
-    }
-
-    @Override
-    public void deactivateCustomer(Long customerId) {
-
-        Customer customer = findCustomerById(customerId);
-
-        if(!Boolean.TRUE.equals(customer.getActive())){
-            throw new InvalidResourceStateException("Customer is already inactive");
-        }
-
+    public void deactivateCustomer(Long organizationId, Long customerId) {
+        Customer customer = findCustomer(organizationId, customerId);
+        if (!Boolean.TRUE.equals(customer.getActive())) throw new InvalidResourceStateException("Customer is already inactive");
         customer.setActive(false);
-
         customerRepository.save(customer);
     }
 
-    @Override
-    @Transactional(readOnly = true)
-    public List<CustomerResponse> searchCustomers(String keyword) {
-
-        if(keyword == null || keyword.isBlank()){
-            return getAllCustomers();
-        }
-        List<Customer> customers = customerRepository.findByActiveTrueAndCustomerNameContainingIgnoreCase(keyword.trim());
-
-        return customerMapper.toResponseList(customers);
+    @Override @Transactional(readOnly = true)
+    public List<CustomerResponse> searchCustomers(Long organizationId, String keyword) {
+        findActiveOrganization(organizationId);
+        if (keyword == null || keyword.isBlank()) return getAllCustomers(organizationId);
+        return customerMapper.toResponseList(customerRepository.findByOrganizationIdAndActiveTrueAndCustomerNameContainingIgnoreCase(organizationId, keyword.trim()));
     }
 
     @Override
-    public CustomerResponse reactivateCustomer(Long customerId) {
-
-        Customer customer = findCustomerById(customerId);
-
-        if(Boolean.TRUE.equals(customer.getActive())){
-            throw new InvalidResourceStateException("Customer is already active");
-        }
-
+    public CustomerResponse reactivateCustomer(Long organizationId, Long customerId) {
+        Customer customer = findCustomer(organizationId, customerId);
+        if (Boolean.TRUE.equals(customer.getActive())) throw new InvalidResourceStateException("Customer is already active");
         customer.setActive(true);
-
-        Customer reactivatedCustomer = customerRepository.save(customer);
-
-        return customerMapper.toResponse(reactivatedCustomer);
+        return customerMapper.toResponse(customerRepository.save(customer));
     }
 
-    @Override
-    public List<CustomerResponse> getInActiveCustomers() {
-
-       List<Customer> customers = customerRepository.findActiveFalse();
-
-        return customerMapper.toResponseList(customers);
+    @Override @Transactional(readOnly = true)
+    public List<CustomerResponse> getInactiveCustomers(Long organizationId) {
+        findActiveOrganization(organizationId);
+        return customerMapper.toResponseList(customerRepository.findByOrganizationIdAndActiveFalse(organizationId));
     }
 
-    private Customer findCustomerById(Long customerId) {
-        if(customerId == null || customerId <= 0){
-            throw new InvalidRequestException("Customer ID cannot be null");
-        }
-        return customerRepository.findById(customerId)
+    private Customer findCustomer(Long organizationId, Long customerId) {
+        findActiveOrganization(organizationId);
+        validateId(customerId, "Customer");
+        return customerRepository.findByIdAndOrganizationId(customerId, organizationId)
                 .orElseThrow(() -> new ResourceNotFoundException("Customer", "id", customerId));
     }
 
-    //Email Validation
-    private void validateUniqueEmail(String email, Customer existingCustomer){
-        if(email == null || email.isBlank()){
-            return;
-        }
+    private Organization findActiveOrganization(Long organizationId) {
+        validateId(organizationId, "Organization");
+        return organizationRepository.findByIdAndStatus(organizationId, OrganizationStatus.ACTIVE)
+                .orElseThrow(() -> new ResourceNotFoundException("Active organization", "id", organizationId));
+    }
 
-        boolean emailBelongsToCurrentCustomer = existingCustomer != null && existingCustomer.getEmail() != null && existingCustomer.getEmail().equalsIgnoreCase(email);
-        if (!emailBelongsToCurrentCustomer && customerRepository.existsByEmailIgnoreCase(normalizedEmail(email))) {
-
+    private void validateUniqueEmail(Long organizationId, String email, Customer existing) {
+        if (email == null || email.isBlank()) return;
+        String normalized = email.trim().toLowerCase();
+        boolean unchanged = existing != null && existing.getEmail() != null && existing.getEmail().equalsIgnoreCase(normalized);
+        if (!unchanged && customerRepository.existsByOrganizationIdAndEmailIgnoreCase(organizationId, normalized))
             throw new DuplicateResourceException("Customer", "email", email);
-        }
     }
 
-    private void validateUniquePhone(String phone,Customer existingCustomer) {
-        if (phone == null || phone.isEmpty()) {
-            return;
-        }
-        boolean phoneBelongsToCurrentCustomer = existingCustomer != null && existingCustomer.getPhone() != null && existingCustomer.getPhone().equals(phone);
-
-        if (!phoneBelongsToCurrentCustomer && customerRepository.existsByPhoneNumber(phone)) {
-
-            throw new DuplicateResourceException("Customer", "phone number", phone);
-        }
+    private void validateUniquePhone(Long organizationId, String phone, Customer existing) {
+        if (phone == null || phone.isBlank()) return;
+        String normalized = phone.trim();
+        boolean unchanged = existing != null && normalized.equals(existing.getPhone());
+        if (!unchanged && customerRepository.existsByOrganizationIdAndPhone(organizationId, normalized))
+            throw new DuplicateResourceException("Customer", "phone", phone);
     }
 
-    private String normalizedEmail(String email){
-        if(email == null || email.isBlank()){
-            return null;
-        }
-        return email.trim().toLowerCase();
+    private void validateId(Long id, String resource) {
+        if (id == null || id <= 0) throw new InvalidRequestException(resource + " id must be greater than zero");
     }
 }
