@@ -13,7 +13,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 @Entity
-@Table (name = "invoices")
+@Table(name = "invoices", uniqueConstraints = {@UniqueConstraint(name = "uk_invoice_org_number", columnNames = {"organization_id", "invoice_number"})})
 public class Invoice {
 
     @Id
@@ -21,7 +21,7 @@ public class Invoice {
     private Long id;
 
     @NotBlank
-    @Column(nullable = false, unique = true)
+    @Column(nullable = false, unique = false)
     @Size(max = 50)
     private String invoiceNumber;
 
@@ -78,6 +78,10 @@ public class Invoice {
 
     @Column(nullable = false)
     private LocalDateTime updatedAt;
+
+    @ManyToOne(fetch = FetchType.LAZY, optional = false)
+    @JoinColumn(name = "organization_id", nullable = false, foreignKey = @ForeignKey(name = "fk_invoices_organization"))
+    private Organization organization;
 
     public Invoice() {}
 

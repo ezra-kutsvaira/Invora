@@ -52,6 +52,10 @@ public class Customer {
     @OneToMany(mappedBy = "customer")
     private List<Invoice> invoices = new ArrayList<>();
 
+    @ManyToOne(fetch = FetchType.LAZY, optional = false)
+    @JoinColumn(name = "organization_id", nullable = false, foreignKey = @ForeignKey(name = "fk_customers_organization"))
+    private Organization organization;
+
     @Column(nullable = false, updatable = false)
     private LocalDateTime createdAt;
 

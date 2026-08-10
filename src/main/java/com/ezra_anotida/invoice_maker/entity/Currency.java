@@ -35,6 +35,11 @@ public class Currency {
     @Column(nullable = false, precision = 19, scale = 6)
     private BigDecimal exchangeRateToBase;
 
+    @ManyToOne(fetch = FetchType.LAZY, optional = false)
+    @JoinColumn(name = "organization_id", nullable = false, foreignKey = @ForeignKey(name = "fk_currencies_organization"))
+    private Organization organization;
+
+
     @Column(nullable = false)
     private Boolean active = true;
 
