@@ -1,29 +1,16 @@
 package com.ezra_anotida.invoice_maker.service;
 
-import com.ezra_anotida.invoice_maker.dto.customer.CreateCustomerRequest;
-import com.ezra_anotida.invoice_maker.dto.customer.CustomerResponse;
-import com.ezra_anotida.invoice_maker.dto.customer.CustomerSummaryResponse;
-import com.ezra_anotida.invoice_maker.dto.customer.UpdateCustomerRequest;
+import com.ezra_anotida.invoice_maker.dto.customer.*;
 import java.util.List;
 
 public interface CustomerService {
-
-    CustomerResponse createCustomer(CreateCustomerRequest request);
-
-    CustomerResponse getCustomerById(Long customerId);
-
-    List<CustomerResponse> getAllCustomers();
-
-    List<CustomerSummaryResponse> getCustomerSummaries();
-
-    CustomerResponse updateCustomer(Long customerId, UpdateCustomerRequest request);
-
-    void deactivateCustomer(Long customerId);
-
-    List<CustomerResponse> searchCustomers(String keyword);
-
-    CustomerResponse reactivateCustomer(Long customerId);
-
-    List<CustomerResponse> getInActiveCustomers();
-
+    CustomerResponse createCustomer(Long organizationId, CreateCustomerRequest request);
+    CustomerResponse getCustomerById(Long organizationId, Long customerId);
+    List<CustomerResponse> getAllCustomers(Long organizationId);
+    List<CustomerSummaryResponse> getCustomerSummaries(Long organizationId);
+    CustomerResponse updateCustomer(Long organizationId, Long customerId, UpdateCustomerRequest request);
+    void deactivateCustomer(Long organizationId, Long customerId);
+    List<CustomerResponse> searchCustomers(Long organizationId, String keyword);
+    CustomerResponse reactivateCustomer(Long organizationId, Long customerId);
+    List<CustomerResponse> getInactiveCustomers(Long organizationId);
 }
