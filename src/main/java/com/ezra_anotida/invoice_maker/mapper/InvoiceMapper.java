@@ -27,7 +27,7 @@ public interface InvoiceMapper {
     @Mapping(target = "customerAddress", source = "customer.address")
     @Mapping(target = "customerCity", source = "customer.city")
     @Mapping(target = "customerCountry", source = "customer.country")
-    @Mapping(target = "customerTaxNumber", source = "customer.taxNumber")
+    @Mapping(target = "customerTaxNumber", source = "customer.tinNumber")
     InvoiceDetailsResponse toDetailsResponse(Invoice invoice);
 
     List<InvoiceResponse> toResponseList(List<Invoice> invoices);
