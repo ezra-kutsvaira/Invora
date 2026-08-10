@@ -9,16 +9,16 @@ import java.math.BigDecimal;
 import java.time.LocalDateTime;
 
 @Entity
-@Table(name = "currencies")
+@Table(name = "currencies", uniqueConstraints = @UniqueConstraint(name = "uk_currencies_org_code", columnNames = {"organization_id", "code"}))
 public class Currency {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    public Long id;
+    private Long id;
 
     @NotBlank
     @Size(max = 10)
-    @Column(nullable = false, unique = true)
+    @Column(nullable = false)
     private String code;
 
     @NotBlank
@@ -60,7 +60,7 @@ public class Currency {
         createdAt = LocalDateTime.now();
         updatedAt = LocalDateTime.now();
 
-        if(active = null){
+        if(active == null){
             active = true;
         }
     }
@@ -143,4 +143,13 @@ public class Currency {
     public void setDefaultCurrency(Boolean defaultCurrency) {
         this.defaultCurrency = defaultCurrency;
     }
+
+    public Organization getOrganization() {
+        return organization;
+    }
+
+    public void setOrganization(Organization organization) {
+        this.organization = organization;
+    }
+
 }
