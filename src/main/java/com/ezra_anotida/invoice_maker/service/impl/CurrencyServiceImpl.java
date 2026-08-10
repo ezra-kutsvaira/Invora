@@ -1,216 +1,141 @@
 package com.ezra_anotida.invoice_maker.service.impl;
 
-import com.ezra_anotida.invoice_maker.exception.DuplicateResourceException;
-import com.ezra_anotida.invoice_maker.exception.InvalidRequestException;
-import com.ezra_anotida.invoice_maker.exception.InvalidResourceStateException;
-import com.ezra_anotida.invoice_maker.exception.ResourceNotFoundException;
-import com.ezra_anotida.invoice_maker.dto.currency.CreateCurrencyRequest;
-import com.ezra_anotida.invoice_maker.dto.currency.CurrencyResponse;
-import com.ezra_anotida.invoice_maker.dto.currency.UpdateCurrencyRequest;
+import com.ezra_anotida.invoice_maker.dto.currency.*;
 import com.ezra_anotida.invoice_maker.entity.Currency;
-
+import com.ezra_anotida.invoice_maker.entity.Organization;
+import com.ezra_anotida.invoice_maker.enums.OrganizationStatus;
+import com.ezra_anotida.invoice_maker.exception.*;
 import com.ezra_anotida.invoice_maker.mapper.CurrencyMapper;
-import org.springframework.stereotype.Service;
 import com.ezra_anotida.invoice_maker.repository.CurrencyRepository;
+import com.ezra_anotida.invoice_maker.repository.OrganizationRepository;
 import com.ezra_anotida.invoice_maker.service.CurrencyService;
+import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-
 import java.util.List;
 
 @Service
 @Transactional
 public class CurrencyServiceImpl implements CurrencyService {
-
     private final CurrencyRepository currencyRepository;
+    private final OrganizationRepository organizationRepository;
     private final CurrencyMapper currencyMapper;
 
-    public CurrencyServiceImpl(CurrencyRepository currencyRepository, CurrencyMapper currencyMapper) {
+    public CurrencyServiceImpl(CurrencyRepository currencyRepository, OrganizationRepository organizationRepository, CurrencyMapper currencyMapper) {
         this.currencyRepository = currencyRepository;
+        this.organizationRepository = organizationRepository;
         this.currencyMapper = currencyMapper;
     }
 
-
     @Override
-    public CurrencyResponse createCurrency(CreateCurrencyRequest request) {
-
-        validateAlreadyExistingCurrency(request.code(), null);
-
+    public CurrencyResponse createCurrency(Long organizationId, CreateCurrencyRequest request) {
+        Organization organization = findActiveOrganization(organizationId);
+        validateUniqueCode(organizationId, request.code(), null);
         Currency currency = currencyMapper.toEntity(request);
+        currency.setOrganization(organization);
+        currency.setCode(normalizeCode(request.code()));
+        currency.setActive(currency.getActive() == null ? true : currency.getActive());
+        currency.setDefaultCurrency(Boolean.TRUE.equals(currency.getDefaultCurrency()));
+        if (Boolean.TRUE.equals(currency.getDefaultCurrency()) && !Boolean.TRUE.equals(currency.getActive()))
+            throw new InvalidRequestException("An inactive currency cannot be default");
+        if (Boolean.TRUE.equals(currency.getDefaultCurrency())) removeCurrentDefault(organizationId);
+        return currencyMapper.toResponse(currencyRepository.save(currency));
+    }
 
-        currency.setCode(request.code().trim().toUpperCase());
+    @Override @Transactional(readOnly = true)
+    public CurrencyResponse getCurrencyById(Long organizationId, Long currencyId) {
+        return currencyMapper.toResponse(findCurrency(organizationId, currencyId));
+    }
 
-        if(currency.getActive() == null){
-            currency.setActive(true);
-        }
+    @Override @Transactional(readOnly = true)
+    public CurrencyResponse getCurrencyByCode(Long organizationId, String code) {
+        findActiveOrganization(organizationId);
+        String normalized = normalizeCode(code);
+        Currency currency = currencyRepository.findByOrganizationIdAndCodeIgnoreCase(organizationId, normalized)
+                .orElseThrow(() -> new ResourceNotFoundException("Currency", "code", normalized));
+        return currencyMapper.toResponse(currency);
+    }
 
-        if(currency.getDefaultCurrency() == null){
-            currency.setDefaultCurrency(false);
-        }
+    @Override @Transactional(readOnly = true)
+    public CurrencyResponse getDefaultCurrency(Long organizationId) {
+        findActiveOrganization(organizationId);
+        return currencyMapper.toResponse(currencyRepository.findByOrganizationIdAndDefaultCurrencyTrue(organizationId)
+                .orElseThrow(() -> new ResourceNotFoundException("No default currency has been configured")));
+    }
 
-        if(Boolean.TRUE.equals(currency.getDefaultCurrency() && !Boolean.TRUE.equals(currency.getActive()))){
-            throw new InvalidRequestException("An inactive currency cannot be set as default");
-        }
-        //Setting a new currency as a default, remove the old currency
-        if(Boolean.TRUE.equals(currency.getDefaultCurrency())){
-            removeCurrentDefaultCurrency();
-        }
-
-        Currency savedCurrency = currencyRepository.save(currency);
-
-        return currencyMapper.toResponse(savedCurrency);
+    @Override @Transactional(readOnly = true)
+    public List<CurrencyResponse> getAllCurrencies(Long organizationId) {
+        findActiveOrganization(organizationId);
+        return currencyMapper.toResponseList(currencyRepository.findByOrganizationId(organizationId));
     }
 
     @Override
-    @Transactional(readOnly = true)
-    public CurrencyResponse getCurrencyById(Long currencyId) {
+    public CurrencyResponse updateCurrency(Long organizationId, Long currencyId, UpdateCurrencyRequest request) {
+        Currency currency = findCurrency(organizationId, currencyId);
+        validateUniqueCode(organizationId, request.code(), currency);
+        boolean becomingDefault = Boolean.TRUE.equals(request.defaultCurrency()) && !Boolean.TRUE.equals(currency.getDefaultCurrency());
+        if (becomingDefault) removeCurrentDefault(organizationId);
+        currencyMapper.updateEntityFromRequest(request, currency);
+        if (currency.getCode() != null) currency.setCode(normalizeCode(currency.getCode()));
+        if (Boolean.TRUE.equals(currency.getDefaultCurrency()) && !Boolean.TRUE.equals(currency.getActive()))
+            throw new InvalidResourceStateException("An inactive currency cannot be default");
+        return currencyMapper.toResponse(currencyRepository.save(currency));
+    }
 
-        Currency currency = findCurrencyById(currencyId);
-
+    @Override
+    public CurrencyResponse setDefaultCurrency(Long organizationId, Long currencyId) {
+        Currency currency = findCurrency(organizationId, currencyId);
+        if (!Boolean.TRUE.equals(currency.getActive())) throw new InvalidResourceStateException("An inactive currency cannot be default");
+        if (!Boolean.TRUE.equals(currency.getDefaultCurrency())) {
+            removeCurrentDefault(organizationId);
+            currency.setDefaultCurrency(true);
+            currencyRepository.save(currency);
+        }
         return currencyMapper.toResponse(currency);
     }
 
     @Override
-    public CurrencyResponse getCurrencyByCode(String currencyCode) {
-
-        Currency currency = findCurrencyByCode(currencyCode);
-
-        return currencyMapper.toResponse(currency);
-    }
-
-    @Override
-    public CurrencyResponse getDefaultCurrency() {
-
-        Currency currency = currencyRepository
-                .findByDefaultCurrencyTrue()
-                .orElseThrow(() -> new ResourceNotFoundException("No default currency has been configured"));
-
-        return currencyMapper.toResponse(currency);
-    }
-
-    @Override
-    public List<CurrencyResponse> getAllCurrencies() {
-
-        List<Currency> currencies = currencyRepository.findAll();
-
-        return currencyMapper.toResponseList(currencies);
-    }
-
-    @Override
-    public CurrencyResponse updateCurrency(Long currencyId, UpdateCurrencyRequest request) {
-
-        Currency existingCurrency = findCurrencyById(currencyId);
-
-        validateAlreadyExistingCurrency(request.code(), existingCurrency);
-
-
-        boolean becomingDefault = Boolean.TRUE.equals(request.defaultCurrency()) && !Boolean.TRUE.equals(existingCurrency.getDefaultCurrency());
-
-        if(becomingDefault){
-            removeCurrentDefaultCurrency();
-        }
-
-        currencyMapper.updateEntityFromRequest(request, existingCurrency);
-
-        //Normalisation
-        if(existingCurrency.getCode() != null){
-            existingCurrency.setCode(
-                    existingCurrency.getCode()
-                            .trim()
-                            .toUpperCase()
-            );
-        }
-
-        Currency updatedCurrency = currencyRepository.save(existingCurrency);
-
-        return currencyMapper.toResponse(updatedCurrency);
-    }
-
-    @Override
-    public CurrencyResponse setDefaultCurrency(Long currencyId) {
-
-        Currency currency = findCurrencyById(currencyId);
-
-        if (!Boolean.TRUE.equals(currency.getActive())) {
-            throw new InvalidResourceStateException("An inactive currency cannot be set as default");
-        }
-
-        if (Boolean.TRUE.equals(currency.getDefaultCurrency())) {
-            return currencyMapper.toResponse(currency);
-        }
-
-        removeCurrentDefaultCurrency();
-
-        currency.setDefaultCurrency(true);
-
-        Currency updatedCurrency = currencyRepository.save(currency);
-
-        return currencyMapper.toResponse(updatedCurrency);
-    }
-
-    @Override
-    public void deactivateCurrency(Long currencyId) {
-        
-        Currency currency = findCurrencyById(currencyId);
-
-        if (Boolean.TRUE.equals(currency.getDefaultCurrency())) {
-            throw new InvalidResourceStateException("The default currency cannot be deactivated");
-        }
-
-        if (!Boolean.TRUE.equals(currency.getActive())) {
-            throw new InvalidResourceStateException("Currency is already inactive");
-        }
-
+    public void deactivateCurrency(Long organizationId, Long currencyId) {
+        Currency currency = findCurrency(organizationId, currencyId);
+        if (Boolean.TRUE.equals(currency.getDefaultCurrency())) throw new InvalidResourceStateException("The default currency cannot be deactivated");
+        if (!Boolean.TRUE.equals(currency.getActive())) throw new InvalidResourceStateException("Currency is already inactive");
         currency.setActive(false);
-
         currencyRepository.save(currency);
     }
 
-    private Currency findCurrencyById(Long currencyId) {
-
-        if(currencyId == null){
-            throw new InvalidRequestException("Currency ID cannot be null");
-        }
-
-        return currencyRepository.findById(currencyId)
+    private Currency findCurrency(Long organizationId, Long currencyId) {
+        findActiveOrganization(organizationId);
+        validateId(currencyId, "Currency");
+        return currencyRepository.findByIdAndOrganizationId(currencyId, organizationId)
                 .orElseThrow(() -> new ResourceNotFoundException("Currency", "id", currencyId));
     }
 
-
-    private void validateAlreadyExistingCurrency (String currencyCode, Currency existingCurrency){
-
-        if(currencyCode == null || currencyCode.isBlank()){
-            return;
-        }
-
-        String normalizedCode = currencyCode.trim().toUpperCase();
-
-        boolean codeBelongsToCurrency = existingCurrency != null && existingCurrency.getCode() != null && existingCurrency.getCode().equalsIgnoreCase(normalizedCode);
-
-        if(!codeBelongsToCurrency &&  currencyRepository.existsByCodeIgnoreCase(normalizedCode)){
-            throw new DuplicateResourceException("Currency", "code", normalizedCode);
-        }
-
+    private Organization findActiveOrganization(Long organizationId) {
+        validateId(organizationId, "Organization");
+        return organizationRepository.findByIdAndStatus(organizationId, OrganizationStatus.ACTIVE)
+                .orElseThrow(() -> new ResourceNotFoundException("Active organization", "id", organizationId));
     }
 
-    private Currency findCurrencyByCode(String currencyCode) {
-
-        if (currencyCode == null || currencyCode.isBlank()){
-            throw new InvalidRequestException("Currency code cannot be empty");
-        }
-
-        String normalizedCode = currencyCode.trim().toUpperCase();
-
-        return currencyRepository.findByCodeIgnoreCase(normalizedCode)
-                .orElseThrow(() -> new ResourceNotFoundException("Currency", "code", normalizedCode));
+    private void validateUniqueCode(Long organizationId, String code, Currency existing) {
+        if (code == null || code.isBlank()) return;
+        String normalized = normalizeCode(code);
+        boolean unchanged = existing != null && existing.getCode() != null && existing.getCode().equalsIgnoreCase(normalized);
+        if (!unchanged && currencyRepository.existsByOrganizationIdAndCodeIgnoreCase(organizationId, normalized))
+            throw new DuplicateResourceException("Currency", "code", normalized);
     }
 
-    private void removeCurrentDefaultCurrency() {
-
-        currencyRepository.findByDefaultCurrencyTrue()
-                .ifPresent(currentDefault -> {
-                    currentDefault.setDefaultCurrency(false);
-                    currencyRepository.save(currentDefault);
-                });
+    private String normalizeCode(String code) {
+        if (code == null || code.isBlank()) throw new InvalidRequestException("Currency code cannot be empty");
+        return code.trim().toUpperCase();
     }
 
+    private void removeCurrentDefault(Long organizationId) {
+        currencyRepository.findByOrganizationIdAndDefaultCurrencyTrue(organizationId).ifPresent(current -> {
+            current.setDefaultCurrency(false);
+            currencyRepository.save(current);
+        });
+    }
+
+    private void validateId(Long id, String resource) {
+        if (id == null || id <= 0) throw new InvalidRequestException(resource + " id must be greater than zero");
+    }
 }
