@@ -7,6 +7,8 @@ import java.util.*;
 
 public interface CurrencyRepository extends JpaRepository<Currency, Long> {
 
+    Optional<Currency> findByOrganizationIdAndDefaultCurrencyTrue(Long organizationId);
+
     List<Currency> findByActiveTrue();
 
     Optional<Currency> findByCodeIgnoreCase (String code);

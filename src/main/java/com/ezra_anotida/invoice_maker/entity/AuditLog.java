@@ -31,6 +31,10 @@ import java.time.LocalDateTime;
         @Size(max = 255)
         private String performedBy;
 
+        @ManyToOne(fetch = FetchType.LAZY, optional = false)
+        @JoinColumn(name = "organization_id", nullable = false, foreignKey = @ForeignKey(name = "fk_audit_logs_organization"))
+        private Organization organization;
+
         @Column(nullable = false, updatable = false)
         private LocalDateTime createdAt;
 
