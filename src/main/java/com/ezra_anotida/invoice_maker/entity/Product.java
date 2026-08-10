@@ -13,7 +13,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 @Entity
-@Table (name = "products")
+@Table(name = "products", uniqueConstraints = @UniqueConstraint(name = "uk_products_org_name", columnNames = {"organization_id", "product_name"}))
 public class Product {
 
     @Id
@@ -152,4 +152,13 @@ public class Product {
     public void setUpdatedAt(LocalDateTime updatedAt) {
         this.updatedAt = updatedAt;
     }
+
+    public Organization getOrganization() {
+        return organization;
+    }
+
+    public void setOrganization(Organization organization) {
+        this.organization = organization;
+    }
+
 }
