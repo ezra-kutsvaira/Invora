@@ -1,7 +1,7 @@
 package com.ezra_anotida.invoice_maker.entity;
 
 import jakarta.persistence.*;
-import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.Positive;
 import jakarta.validation.constraints.NotNull;
 
 import java.math.BigDecimal;
@@ -18,7 +18,8 @@ public class InvoiceItem {
     @Column(nullable = false, length = 1000)
     private String description;
 
-    @NotBlank
+    @NotNull
+    @Positive
     @Column(nullable = false)
     private Integer quantity;
 
