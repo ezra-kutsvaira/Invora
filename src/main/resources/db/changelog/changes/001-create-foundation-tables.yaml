@@ -1,0 +1,259 @@
+databaseChangeLog:
+- changeSet:
+    id: 001-create-organizations
+    author: ezra
+    changes:
+      - createTable:
+        tableName: organizations
+        columns:
+          - column:
+            name: id
+            type: BIGINT
+            autoIncrement: true
+            constraints:
+              primaryKey: true
+              primaryKeyName: pk_organizations
+              nullable: false
+
+          - column:
+              name: name
+              type: VARCHAR(150)
+              constraints:
+                nullable: false
+
+          - column:
+              name: slug
+              type: VARCHAR(100)
+              constraints:
+                nullable: false
+
+          - column:
+              name: status
+              type: VARCHAR(30)
+              defaultValue: ACTIVE
+              constraints:
+                nullable: false
+
+          - column:
+                name: created_at
+                type: TIMESTAMP
+                defaultValueComputed: CURRENT_TIMESTAMP
+                constraints:
+                  nullable: false
+
+          - column:
+              name: updated_at
+              type: TIMESTAMP
+              defaultValueComputed: CURRENT_TIMESTAMP
+              constraints:
+                nullable: false
+
+          - addUniqueConstraint:
+              tableName: organizations
+              columnNames: slug
+              constraintName: uk_organizations_slug
+
+      - changeSet:
+          id: 002-create-users
+          author: ezra
+          changes:
+            - createTable:
+                tableName: users
+                columns:
+                  - column:
+                      name: id
+                      type: BIGINT
+                      autoIncrement: true
+                      constraints:
+                        primaryKey: true
+                        primaryKeyName: pk_users
+                        nullable: false
+
+                  - column:
+                      name: name
+                      type: VARCHAR(255)
+                      constraints:
+                        nullable: false
+
+                  - column:
+                      name: email
+                      type: VARCHAR(255)
+                      constraints:
+                        nullable: false
+
+                  - column:
+                      name: password
+                      type: VARCHAR(255)
+                      constraints:
+                        nullable: false
+
+                  - column:
+                      name: enabled
+                      type: BOOLEAN
+                      defaultValueBoolean: true
+                      constraints:
+                        nullable: false
+
+                  - column:
+                      name: role
+                      type: VARCHAR(30)
+
+                  - column:
+                      name: created_at
+                      type: TIMESTAMP
+                      defaultValueComputed: CURRENT_TIMESTAMP
+
+                  - column:
+                      name: updated_at
+                      type: TIMESTAMP
+                      defaultValueComputed: CURRENT_TIMESTAMP
+
+            - addUniqueConstraint:
+                tableName: users
+                columnNames: email
+                constraintName: uk_users_email
+
+- changeSet:
+    id: 002-create-users
+    author: ezra
+    changes:
+      - createTable:
+          tableName: users
+          columns:
+            - column:
+                name: id
+                type: BIGINT
+                autoIncrement: true
+                constraints:
+                  primaryKey: true
+                  primaryKeyName: pk_users
+                  nullable: false
+
+            - column:
+                name: name
+                type: VARCHAR(255)
+                constraints:
+                  nullable: false
+
+            - column:
+                name: email
+                type: VARCHAR(255)
+                constraints:
+                  nullable: false
+
+            - column:
+                name: password
+                type: VARCHAR(255)
+                constraints:
+                  nullable: false
+
+            - column:
+                name: enabled
+                type: BOOLEAN
+                defaultValueBoolean: true
+                constraints:
+                  nullable: false
+
+            - column:
+                name: role
+                type: VARCHAR(30)
+
+            - column:
+                name: created_at
+                type: TIMESTAMP
+                defaultValueComputed: CURRENT_TIMESTAMP
+
+            - column:
+                name: updated_at
+                type: TIMESTAMP
+                defaultValueComputed: CURRENT_TIMESTAMP
+
+      - addUniqueConstraint:
+          tableName: users
+          columnNames: email
+          constraintName: uk_users_email
+
+- changeSet:
+    id: 003-create-organization-memberships
+    author: ezra
+    changes:
+      - createTable:
+          tableName: organization_memberships
+          columns:
+            - column:
+                name: id
+                type: BIGINT
+                autoIncrement: true
+                constraints:
+                  primaryKey: true
+                  primaryKeyName: pk_organization_memberships
+                  nullable: false
+
+            - column:
+                name: organization_id
+                type: BIGINT
+                constraints:
+                  nullable: false
+
+            - column:
+                name: user_id
+                type: BIGINT
+                constraints:
+                  nullable: false
+
+            - column:
+                name: role
+                type: VARCHAR(30)
+                constraints:
+                  nullable: false
+
+            - column:
+                name: status
+                type: VARCHAR(30)
+                defaultValue: ACTIVE
+                constraints:
+                  nullable: false
+
+            - column:
+                name: created_at
+                type: TIMESTAMP
+                defaultValueComputed: CURRENT_TIMESTAMP
+                constraints:
+                  nullable: false
+
+            - column:
+                name: updated_at
+                type: TIMESTAMP
+                defaultValueComputed: CURRENT_TIMESTAMP
+                constraints:
+                  nullable: false
+
+      - addForeignKeyConstraint:
+          baseTableName: organization_memberships
+          baseColumnNames: organization_id
+          referencedTableName: organizations
+          referencedColumnNames: id
+          constraintName: fk_memberships_organization
+          onDelete: RESTRICT
+
+      - addForeignKeyConstraint:
+          baseTableName: organization_memberships
+          baseColumnNames: user_id
+          referencedTableName: users
+          referencedColumnNames: id
+          constraintName: fk_memberships_user
+          onDelete: RESTRICT
+
+      - createIndex:
+          tableName: organization_memberships
+          indexName: idx_memberships_organization
+          columns:
+            - column:
+                name: organization_id
+
+      - createIndex:
+          tableName: organization_memberships
+          indexName: idx_memberships_user
+          columns:
+            - column:
+                name: user_id
