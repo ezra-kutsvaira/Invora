@@ -1,0 +1,432 @@
+databaseChangeLog:
+  - changeSet:
+      id: 009-create-invoices
+      author: ezra
+      changes:
+        - createTable:
+            tableName: invoices
+            columns:
+              - column:
+                  name: id
+                  type: BIGINT
+                  autoIncrement: true
+                  constraints:
+                    primaryKey: true
+                    primaryKeyName: pk_invoices
+                    nullable: false
+
+              - column:
+                  name: invoice_number
+                  type: VARCHAR(50)
+                  constraints:
+                    nullable: false
+
+              - column:
+                  name: invoice_date
+                  type: DATE
+                  constraints:
+                    nullable: false
+
+              - column:
+                  name: due_date
+                  type: DATE
+                  constraints:
+                    nullable: false
+
+              - column:
+                  name: subtotal
+                  type: NUMERIC(19,2)
+                  defaultValueNumeric: 0
+                  constraints:
+                    nullable: false
+
+              - column:
+                  name: tax_amount
+                  type: NUMERIC(19,2)
+                  defaultValueNumeric: 0
+                  constraints:
+                    nullable: false
+
+              - column:
+                  name: discount_amount
+                  type: NUMERIC(19,2)
+                  defaultValueNumeric: 0
+                  constraints:
+                    nullable: false
+
+              - column:
+                  name: total_amount
+                  type: NUMERIC(19,2)
+                  defaultValueNumeric: 0
+                  constraints:
+                    nullable: false
+
+              - column:
+                  name: amount_paid
+                  type: NUMERIC(19,2)
+                  defaultValueNumeric: 0
+                  constraints:
+                    nullable: false
+
+              - column:
+                  name: balance_due
+                  type: NUMERIC(19,2)
+                  defaultValueNumeric: 0
+                  constraints:
+                    nullable: false
+
+              - column:
+                  name: status
+                  type: VARCHAR(30)
+                  defaultValue: DRAFT
+                  constraints:
+                    nullable: false
+
+              - column:
+                  name: notes
+                  type: VARCHAR(2000)
+
+              - column:
+                  name: customer_id
+                  type: BIGINT
+                  constraints:
+                    nullable: false
+
+              - column:
+                  name: organization_id
+                  type: BIGINT
+                  constraints:
+                    nullable: false
+
+              - column:
+                  name: created_at
+                  type: TIMESTAMP
+                  defaultValueComputed: CURRENT_TIMESTAMP
+                  constraints:
+                    nullable: false
+
+              - column:
+                  name: updated_at
+                  type: TIMESTAMP
+                  defaultValueComputed: CURRENT_TIMESTAMP
+                  constraints:
+                    nullable: false
+
+        - addUniqueConstraint:
+            tableName: invoices
+            columnNames: organization_id, invoice_number
+            constraintName: uk_invoice_org_number
+
+        - addForeignKeyConstraint:
+            baseTableName: invoices
+            baseColumnNames: customer_id
+            referencedTableName: customers
+            referencedColumnNames: id
+            constraintName: fk_invoices_customer
+            onDelete: RESTRICT
+
+        - addForeignKeyConstraint:
+            baseTableName: invoices
+            baseColumnNames: organization_id
+            referencedTableName: organizations
+            referencedColumnNames: id
+            constraintName: fk_invoices_organization
+            onDelete: RESTRICT
+
+        - createIndex:
+            tableName: invoices
+            indexName: idx_invoices_customer
+            columns:
+              - column:
+                  name: customer_id
+
+        - createIndex:
+            tableName: invoices
+            indexName: idx_invoices_organization
+            columns:
+              - column:
+                  name: organization_id
+
+  - changeSet:
+      id: 010-create-invoice-items
+      author: ezra
+      changes:
+        - createTable:
+            tableName: invoice_items
+            columns:
+              - column:
+                  name: id
+                  type: BIGINT
+                  autoIncrement: true
+                  constraints:
+                    primaryKey: true
+                    primaryKeyName: pk_invoice_items
+                    nullable: false
+
+              - column:
+                  name: description
+                  type: VARCHAR(1000)
+                  constraints:
+                    nullable: false
+
+              - column:
+                  name: quantity
+                  type: INTEGER
+                  constraints:
+                    nullable: false
+
+              - column:
+                  name: unit_price
+                  type: NUMERIC(19,2)
+                  constraints:
+                    nullable: false
+
+              - column:
+                  name: line_total
+                  type: NUMERIC(19,2)
+                  defaultValueNumeric: 0
+                  constraints:
+                    nullable: false
+
+              - column:
+                  name: invoice_id
+                  type: BIGINT
+                  constraints:
+                    nullable: false
+
+              - column:
+                  name: product_id
+                  type: BIGINT
+
+        - addForeignKeyConstraint:
+            baseTableName: invoice_items
+            baseColumnNames: invoice_id
+            referencedTableName: invoices
+            referencedColumnNames: id
+            constraintName: fk_invoice_items_invoice
+            onDelete: CASCADE
+
+        - addForeignKeyConstraint:
+            baseTableName: invoice_items
+            baseColumnNames: product_id
+            referencedTableName: products
+            referencedColumnNames: id
+            constraintName: fk_invoice_items_product
+            onDelete: SET NULL
+
+        - createIndex:
+            tableName: invoice_items
+            indexName: idx_invoice_items_invoice
+            columns:
+              - column:
+                  name: invoice_id
+
+        - createIndex:
+            tableName: invoice_items
+            indexName: idx_invoice_items_product
+            columns:
+              - column:
+                  name: product_id
+
+  - changeSet:
+      id: 011-create-payments
+      author: ezra
+      changes:
+        - createTable:
+            tableName: payments
+            columns:
+              - column:
+                  name: id
+                  type: BIGINT
+                  autoIncrement: true
+                  constraints:
+                    primaryKey: true
+                    primaryKeyName: pk_payments
+                    nullable: false
+
+              - column:
+                  name: payment_date
+                  type: DATE
+                  constraints:
+                    nullable: false
+
+              - column:
+                  name: amount
+                  type: NUMERIC(19,2)
+                  constraints:
+                    nullable: false
+
+              - column:
+                  name: payment_method
+                  type: VARCHAR(30)
+                  constraints:
+                    nullable: false
+
+              - column:
+                  name: reference_number
+                  type: VARCHAR(100)
+
+              - column:
+                  name: notes
+                  type: VARCHAR(1000)
+
+              - column:
+                  name: invoice_id
+                  type: BIGINT
+                  constraints:
+                    nullable: false
+
+              - column:
+                  name: created_at
+                  type: TIMESTAMP
+                  defaultValueComputed: CURRENT_TIMESTAMP
+                  constraints:
+                    nullable: false
+
+        - addForeignKeyConstraint:
+            baseTableName: payments
+            baseColumnNames: invoice_id
+            referencedTableName: invoices
+            referencedColumnNames: id
+            constraintName: fk_payments_invoice
+            onDelete: RESTRICT
+
+        - createIndex:
+            tableName: payments
+            indexName: idx_payments_invoice
+            columns:
+              - column:
+                  name: invoice_id
+
+  - changeSet:
+      id: 012-create-receipts
+      author: ezra
+      changes:
+        - createTable:
+            tableName: receipts
+            columns:
+              - column:
+                  name: id
+                  type: BIGINT
+                  autoIncrement: true
+                  constraints:
+                    primaryKey: true
+                    primaryKeyName: pk_receipts
+                    nullable: false
+
+              - column:
+                  name: receipt_number
+                  type: VARCHAR(255)
+                  constraints:
+                    nullable: false
+
+              - column:
+                  name: receipt_date
+                  type: DATE
+                  constraints:
+                    nullable: false
+
+              - column:
+                  name: amount
+                  type: NUMERIC(19,2)
+                  constraints:
+                    nullable: false
+
+              - column:
+                  name: payment_id
+                  type: BIGINT
+                  constraints:
+                    nullable: false
+
+              - column:
+                  name: created_at
+                  type: TIMESTAMP
+                  defaultValueComputed: CURRENT_TIMESTAMP
+                  constraints:
+                    nullable: false
+
+        - addUniqueConstraint:
+            tableName: receipts
+            columnNames: receipt_number
+            constraintName: uk_receipts_number
+
+        - addUniqueConstraint:
+            tableName: receipts
+            columnNames: payment_id
+            constraintName: uk_receipts_payment
+
+        - addForeignKeyConstraint:
+            baseTableName: receipts
+            baseColumnNames: payment_id
+            referencedTableName: payments
+            referencedColumnNames: id
+            constraintName: fk_receipts_payment
+            onDelete: CASCADE
+
+  - changeSet:
+      id: 013-create-audit-logs
+      author: ezra
+      changes:
+        - createTable:
+            tableName: audit_logs
+            columns:
+              - column:
+                  name: id
+                  type: BIGINT
+                  autoIncrement: true
+                  constraints:
+                    primaryKey: true
+                    primaryKeyName: pk_audit_logs
+                    nullable: false
+
+              - column:
+                  name: action
+                  type: VARCHAR(100)
+                  constraints:
+                    nullable: false
+
+              - column:
+                  name: entity_name
+                  type: VARCHAR(100)
+                  constraints:
+                    nullable: false
+
+              - column:
+                  name: entity_id
+                  type: BIGINT
+
+              - column:
+                  name: description
+                  type: VARCHAR(2000)
+
+              - column:
+                  name: performed_by
+                  type: VARCHAR(255)
+
+              - column:
+                  name: organization_id
+                  type: BIGINT
+                  constraints:
+                    nullable: false
+
+              - column:
+                  name: created_at
+                  type: TIMESTAMP
+                  defaultValueComputed: CURRENT_TIMESTAMP
+                  constraints:
+                    nullable: false
+
+        - addForeignKeyConstraint:
+            baseTableName: audit_logs
+            baseColumnNames: organization_id
+            referencedTableName: organizations
+            referencedColumnNames: id
+            constraintName: fk_audit_logs_organization
+            onDelete: RESTRICT
+
+        - createIndex:
+            tableName: audit_logs
+            indexName: idx_audit_logs_organization
+            columns:
+              - column:
+                  name: organization_id

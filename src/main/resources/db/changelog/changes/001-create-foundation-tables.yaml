@@ -236,24 +236,24 @@ databaseChangeLog:
           constraintName: fk_memberships_organization
           onDelete: RESTRICT
 
-            - addForeignKeyConstraint:
-                baseTableName: organization_memberships
-                baseColumnNames: user_id
-                referencedTableName: users
-                referencedColumnNames: id
-                constraintName: fk_memberships_user
-                onDelete: RESTRICT
+      - addForeignKeyConstraint:
+          baseTableName: organization_memberships
+          baseColumnNames: user_id
+          referencedTableName: users
+          referencedColumnNames: id
+          constraintName: fk_memberships_user
+          onDelete: RESTRICT
 
-            - createIndex:
-                tableName: organization_memberships
-                indexName: idx_memberships_organization
-                columns:
-                  - column:
-                      name: organization_id
+      - createIndex:
+          tableName: organization_memberships
+          indexName: idx_memberships_organization
+          columns:
+            - column:
+                name: organization_id
 
-            - createIndex:
-                tableName: organization_memberships
-                indexName: idx_memberships_user
-                columns:
-                  - column:
-                      name: user_id
+      - createIndex:
+          tableName: organization_memberships
+          indexName: idx_memberships_user
+          columns:
+            - column:
+                name: user_id
