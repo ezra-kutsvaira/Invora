@@ -1,0 +1,56 @@
+spring:
+  application:
+    name: invora
+
+  datasource:
+    url: "${DATABASE_URL:jdbc:postgresql://localhost:5432/invora_db}"
+    username: "${DATABASE_USERNAME:invora_user}"
+    password: "${DATABASE_PASSWORD}"
+    driver-class-name: org.postgresql.Driver
+
+  hikari:
+    pool-name: InvoraHikariPool
+    maximum-pool-size: "${DB_POOL_MAX_SIZE:10}"
+    minimum-idle: "${DB_POOL_MIN_IDLE:2}"
+    idle-timeout: "${DB_POOL_IDLE_TIMEOUT:30000}"
+    max-lifetime: "${DB_POOL_MAX_LIFETIME:600000}"
+    connection-timeout: "${DB_POOL_CONNECTION_TIMEOUT:30000}"
+
+  jpa:
+    hibernate:
+      ddl-auto: validate
+
+    open-in-view: false
+    show-sql: "${JPA_SHOW_SQL:false}"
+
+    database-platform: org.hiberanate.dialect.PostgreSQLDialect
+
+    properties:
+      hibernate:
+        format_sql: true
+        default_schema: public
+
+        jdbc:
+          time_zone: UTC
+
+  liquibase:
+    enabled: true
+    change-log: classpath:db/changelog/db.changelog-master.yaml
+    default-schema: public
+    drop-first: false
+
+  sql:
+    init:
+      mode: never
+
+  server:
+    port: "${SERVER_PORT:8080}"
+
+    servlet:
+      context-path: /
+
+  logging:
+    level:
+      root: "${ROOT_LOG_LEVEL:INFO}"
+      com.ezra_anotida.invoice_maker: "${INVORA_LOG_LEVEL:INFO}"
+
