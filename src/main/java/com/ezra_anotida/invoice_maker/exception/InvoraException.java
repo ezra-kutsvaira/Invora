@@ -1,4 +1,4 @@
-package com.ezra_anotida.invoice_maker.mapper.exception;
+package com.ezra_anotida.invoice_maker.exception;
 
 import java.util.Objects;
 
