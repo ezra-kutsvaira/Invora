@@ -1,0 +1,51 @@
+name: invora
+
+services:
+  postgres:
+    image: postgres:17.6-alpine
+
+    environment:
+      POSTGRES_DB: "${POSTGRES_DB:-invora_db}"
+      POSTGRES_USER: "${POSTGRES_USER:-invora_user}"
+      POSTGRES_PASSWORD: "${POSTGRES_PASSWORD:?Set POSTGRES_PASSWORD in .env}"
+
+    volumes:
+      - invora_postgres_data:/var/lib/postgresql/data
+
+    healthcheck:
+      test:
+        CMD-SHELL
+        pg_isready -U $${POSTGRES_USER} -d $${POSTGRES_DB}
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
+
+    restart: unless-stopped
+
+  application:
+    build:
+      context: .
+      dockerfile: Dockerfile
+
+    environment:
+      DATABASE_URL: "jdbc:postgresql://postgres:5432/${POSTGRES_DB:-invora_db}"
+      DATABASE_USERNAME: "${POSTGRES_USER:-invora_user}"
+      DATABASE_PASSWORD: "${POSTGRES_PASSWORD:?Set POSTGRES_PASSWORD in .env}"
+      SERVER_PORT: 8080
+
+    ports:
+      - "${APPLICATION_PORT:-8080}:8080"
+
+    depends_on:
+      postgres:
+        condition: service_healthy
+
+    restart: unless-stopped
+    init: true
+
+volumes:
+  invora_postgres_data:
+
+
+
