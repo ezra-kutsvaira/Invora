@@ -70,7 +70,7 @@ Invora is actively developed. Its core domain model and major business services 
 | Framework | Spring Boot 4.1.0 |
 | Web | Spring Web MVC |
 | Persistence | Spring Data JPA and Hibernate |
-| Database | MySQL |
+| Database | PostgreSQL |
 | Mapping | MapStruct 1.6.3 |
 | Validation | Jakarta Bean Validation |
 | Security | Spring Security and JWT |
