@@ -1,7 +1,7 @@
 package com.ezra_anotida.invoice_maker.service.impl;
 
-import com.ezra_anotida.invoice_maker.exception.BusinessRuleException;
-import com.ezra_anotida.invoice_maker.exception.InvalidRequestException;
+import com.ezra_anotida.invoice_maker.mapper.exception.BusinessRuleException;
+import com.ezra_anotida.invoice_maker.mapper.exception.InvalidRequestException;
 import com.ezra_anotida.invoice_maker.entity.Invoice;
 import com.ezra_anotida.invoice_maker.entity.InvoiceItem;
 import org.springframework.stereotype.Service;

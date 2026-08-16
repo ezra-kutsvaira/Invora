@@ -1,4 +1,4 @@
-package com.ezra_anotida.invoice_maker.exception;
+package com.ezra_anotida.invoice_maker.mapper.exception;
 
 public enum ApiErrorCode {
     RESOURCE_NOT_FOUND,

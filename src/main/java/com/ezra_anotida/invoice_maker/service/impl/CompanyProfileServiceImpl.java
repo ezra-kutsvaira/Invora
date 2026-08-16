@@ -2,9 +2,9 @@ package com.ezra_anotida.invoice_maker.service.impl;
 
 import com.ezra_anotida.invoice_maker.entity.Organization;
 import com.ezra_anotida.invoice_maker.enums.OrganizationStatus;
-import com.ezra_anotida.invoice_maker.exception.DuplicateResourceException;
-import com.ezra_anotida.invoice_maker.exception.InvalidRequestException;
-import com.ezra_anotida.invoice_maker.exception.ResourceNotFoundException;
+import com.ezra_anotida.invoice_maker.mapper.exception.DuplicateResourceException;
+import com.ezra_anotida.invoice_maker.mapper.exception.InvalidRequestException;
+import com.ezra_anotida.invoice_maker.mapper.exception.ResourceNotFoundException;
 import com.ezra_anotida.invoice_maker.dto.company.CompanyProfileResponse;
 import com.ezra_anotida.invoice_maker.dto.company.CreateCompanyProfileRequest;
 import com.ezra_anotida.invoice_maker.dto.company.UpdateCompanyProfileRequest;

@@ -6,6 +6,8 @@ import com.ezra_anotida.invoice_maker.entity.Organization;
 import com.ezra_anotida.invoice_maker.enums.OrganizationStatus;
 import com.ezra_anotida.invoice_maker.exception.*;
 import com.ezra_anotida.invoice_maker.mapper.AuditLogMapper;
+import com.ezra_anotida.invoice_maker.mapper.exception.InvalidRequestException;
+import com.ezra_anotida.invoice_maker.mapper.exception.ResourceNotFoundException;
 import com.ezra_anotida.invoice_maker.repository.AuditLogRepository;
 import com.ezra_anotida.invoice_maker.repository.OrganizationRepository;
 import com.ezra_anotida.invoice_maker.service.AuditLogService;
