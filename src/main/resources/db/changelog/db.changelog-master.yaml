@@ -1,13 +1,13 @@
 databaseChangelog:
-  -include:
+  - include:
     file: changes/001-create-foundation-tables.yaml
     relativeToChangelogFile: true
 
-  -include:
+  - include:
     file: changes/002-create-business-tables.yaml
     relativeToChangelogFile: true
 
-  -include:
+  - include:
     file: changes/003-create-invoicing-tables.yaml
     relativeToChangelogFile: true
 
