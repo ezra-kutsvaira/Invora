@@ -126,4 +126,5 @@ public class Organization {
     ) {
         this.updatedAt = updatedAt;
     }
+
 }
