@@ -1,7 +1,9 @@
 package com.ezra_anotida.invoice_maker.integration;
+import com.ezra_anotida.invoice_maker.config.TestContainersConfiguration;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.context.annotation.Import;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.test.context.ActiveProfiles;
 
@@ -11,6 +13,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 @SpringBootTest
 @ActiveProfiles("test")
+@Import(TestContainersConfiguration.class)
 class LiquibaseMigrationIntegrationTest {
 
     @Autowired
@@ -21,7 +24,7 @@ class LiquibaseMigrationIntegrationTest {
         List<String> appliedChangeSets = jdbcTemplate.queryForList(
                 """
                       SELECT id
-                      FROM databaseChangeLog
+                      FROM databasechangeLog
                       ORDER BY orderexecuted
                       """,
                       String.class
@@ -49,7 +52,7 @@ class LiquibaseMigrationIntegrationTest {
     void shouldCreateExpectedTables(){
         List<String> tableNames = jdbcTemplate.queryForList(
                 """
-                        SELECT table name
+                        SELECT table_name
                         FROM information_schema.tables
                         WHERE table_schema = 'public'
                         """,

@@ -10,10 +10,12 @@ import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.context.annotation.Import;
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.transaction.annotation.Transactional;
 
 import static org.assertj.core.api.AssertionsForClassTypes.assertThat;
+import static org.assertj.core.api.AssertionsForClassTypes.assertThatThrownBy;
 
 @SpringBootTest
 @ActiveProfiles("test")
@@ -55,6 +57,24 @@ class OrganizationMembershipRepositoryIntegrationTest {
                 .isEmpty();
     }
 
+    @Test
+    void shouldRejectDuplicateMembershipForSameOrganizationAndUser(){
+
+        Organization organization = createOrganization("Invora", "invora");
+
+        User user = createUser("Ezra", "ezra@example.com");
+
+        OrganizationMembership first =  createMembership(organization, user);
+
+        organizationMembershipRepository.saveAndFlush(first);
+
+        OrganizationMembership duplicate = createMembership(organization, user);
+
+        assertThatThrownBy(() -> organizationMembershipRepository.saveAndFlush(duplicate))
+                .isInstanceOf(DataIntegrityViolationException.class);
+
+    }
+
     private Organization createOrganization(String name, String slug) {
         Organization organization = new Organization();
         organization.setName(name);
@@ -76,13 +96,13 @@ class OrganizationMembershipRepositoryIntegrationTest {
 
     private OrganizationMembership createMembership(Organization organization, User user) {
 
-        OrganizationMembership membership = new OrganizationMembership();
+        OrganizationMembership organizationMembership = new OrganizationMembership();
 
-        membership.setOrganization(organization);
-        membership.setUser(user);
-        membership.setRole(OrganizationRole.OWNER);
-        membership.setStatus(MembershipStatus.ACTIVE);
+        organizationMembership.setOrganization(organization);
+        organizationMembership.setUser(user);
+        organizationMembership.setRole(OrganizationRole.OWNER);
+        organizationMembership.setStatus(MembershipStatus.ACTIVE);
 
-        return membership;
+        return organizationMembership;
     }
 }
