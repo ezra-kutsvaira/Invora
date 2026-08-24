@@ -3,6 +3,8 @@ package com.ezra_anotida.invoice_maker.dto.company;
 public record CompanyProfileResponse(
         Long id,
 
+        Long organizationId,
+
         String companyName,
 
         String email,
