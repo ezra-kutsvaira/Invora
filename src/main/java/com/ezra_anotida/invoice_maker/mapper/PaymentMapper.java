@@ -4,7 +4,6 @@ import com.ezra_anotida.invoice_maker.dto.payment.CreatePaymentRequest;
 import com.ezra_anotida.invoice_maker.dto.payment.PaymentResponse;
 import com.ezra_anotida.invoice_maker.dto.payment.PaymentSummaryResponse;
 import com.ezra_anotida.invoice_maker.dto.payment.UpdatePaymentRequest;
-import com.ezra_anotida.invoice_maker.entity.Invoice;
 import com.ezra_anotida.invoice_maker.entity.Payment;
 import org.mapstruct.*;
 
@@ -13,7 +12,9 @@ import java.util.List;
 @Mapper(componentModel = "spring")
 public interface PaymentMapper {
 
-    @Mapping(target = "invoice", source = "invoiceId")
+    @Mapping(target = "id", ignore = true)
+    @Mapping(target = "invoice", ignore = true)
+    @Mapping(target = "receipt", ignore = true)
     Payment toEntity(CreatePaymentRequest request);
 
     @Mapping(target = "invoiceId", source = "invoice.id")
@@ -28,16 +29,10 @@ public interface PaymentMapper {
 
     List<PaymentSummaryResponse> toSummaryResponseList(List<Payment> payments);
 
+    @Mapping(target = "id", ignore = true)
+    @Mapping(target = "invoice", ignore = true)
+    @Mapping(target = "receipt", ignore = true)
     @BeanMapping(nullValuePropertyMappingStrategy = NullValuePropertyMappingStrategy.IGNORE)
     void updateEntityFromRequest(UpdatePaymentRequest request, @MappingTarget Payment payment);
 
-    default Invoice mapInvoice(Long invoiceId) {
-        if (invoiceId == null) {
-            return null;
-        }
-
-        Invoice invoice = new Invoice();
-        invoice.setId(invoiceId);
-        return invoice;
-    }
 }

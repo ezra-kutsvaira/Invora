@@ -11,25 +11,17 @@ public interface OrganizationMapper {
 
     @Mapping(target = "id", ignore = true)
     @Mapping(target = "status", ignore = true)
-    @Mapping(target = "active", ignore = true)
     @Mapping(target = "companyProfile", ignore = true)
     @Mapping(target = "createdAt", ignore = true)
     @Mapping(target = "updatedAt", ignore = true)
-    Organization toEntity(
-            CreateOrganizationRequest request
-    );
+    Organization toEntity(CreateOrganizationRequest request);
 
-    @Mapping(
-            target = "companyProfileConfigured",
-            expression = "java(organization.getCompanyProfile() != null)"
-    )
-    OrganizationResponse toResponse(
-            Organization organization
-    );
+    @Mapping(target = "companyProfileConfigured", expression = "java(organization.getCompanyProfile() != null)")
+    @Mapping(target = "active", expression = "java(organization.getStatus() == com.ezra_anotida.invoice_maker.enums.OrganizationStatus.ACTIVE)")
+    OrganizationResponse toResponse(Organization organization);
 
     @Mapping(target = "id", ignore = true)
     @Mapping(target = "status", ignore = true)
-    @Mapping(target = "active", ignore = true)
     @Mapping(target = "companyProfile", ignore = true)
     @Mapping(target = "createdAt", ignore = true)
     @Mapping(target = "updatedAt", ignore = true)

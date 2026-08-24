@@ -1,4 +1,4 @@
-databaseChangelog:
+databaseChangeLog:
   - include:
       file: changes/001-create-foundation-tables.yaml
       relativeToChangelogFile: true
