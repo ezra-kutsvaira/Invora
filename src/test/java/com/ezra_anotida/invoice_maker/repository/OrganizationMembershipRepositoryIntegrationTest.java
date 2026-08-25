@@ -41,10 +41,7 @@ class OrganizationMembershipRepositoryIntegrationTest {
 
         User user = createUser("Ezra", "ezra@invora.co.zw");
 
-        OrganizationMembership organizationMembership = new OrganizationMembership();
-        organizationMembership.setOrganization(firstOrganization);
-        organizationMembership.setUser(user);
-        organizationMembership.setStatus(MembershipStatus.ACTIVE);
+       OrganizationMembership organizationMembership = createMembership(firstOrganization, user);
 
         OrganizationMembership saved = organizationMembershipRepository.saveAndFlush(organizationMembership);
 
