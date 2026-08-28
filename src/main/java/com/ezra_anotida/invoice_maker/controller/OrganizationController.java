@@ -2,6 +2,7 @@ package com.ezra_anotida.invoice_maker.controller;
 
 import com.ezra_anotida.invoice_maker.dto.organization.CreateOrganizationRequest;
 import com.ezra_anotida.invoice_maker.dto.organization.OrganizationResponse;
+import com.ezra_anotida.invoice_maker.dto.organization.UpdateOrganizationRequest;
 import com.ezra_anotida.invoice_maker.service.OrganizationService;
 import jakarta.validation.Valid;
 import org.springframework.data.domain.Page;
@@ -31,9 +32,9 @@ public class OrganizationController {
     }
 
     @GetMapping("/{organizationId}")
-    public ResponseEntity<OrganizationResponse> getOrganization(@PathVariable Long id) {
+    public ResponseEntity<OrganizationResponse> getOrganization(@PathVariable Long organizationId) {
 
-        OrganizationResponse organizationResponse = organizationService.getOrganizationById(id);
+        OrganizationResponse organizationResponse = organizationService.getOrganizationById(organizationId);
 
         return ResponseEntity.ok(organizationResponse);
     }
@@ -62,11 +63,45 @@ public class OrganizationController {
         return ResponseEntity.ok(organizationResponse);
     }
 
-    @PutMapping("/{organizationId}")
-    public ResponseEntity<Void> deactivateOrganization (@PathVariable Long organizationId){
+    @GetMapping("/search")
+    public ResponseEntity<Page<OrganizationResponse>> searchOrganizations(@RequestParam String keyword, Pageable pageable){
 
-        OrganizationResponse organizationResponse = organizationService.deactivateOrganization(organizationId);
+         Page<OrganizationResponse> organizationResponse = organizationService.searchOrganizations(keyword, pageable);
 
+         return ResponseEntity.ok(organizationResponse);
     }
+
+    @PutMapping("/organizationId")
+    public ResponseEntity<OrganizationResponse> updateOrganization(@PathVariable Long organizationId, @Valid @RequestBody UpdateOrganizationRequest updateOrganizationRequest){
+
+        OrganizationResponse organizationResponse = organizationService.updateOrganization(organizationId, updateOrganizationRequest);
+
+        return ResponseEntity.ok(organizationResponse);
+    }
+
+    @PatchMapping("/organizationId")
+    public ResponseEntity<Void> deactivateOrganization(@PathVariable Long organizationId){
+
+        organizationService.deactivateOrganization(organizationId);
+
+        return ResponseEntity.noContent().build();
+    }
+
+    @PatchMapping("/{organizationId}/reactivate")
+    public ResponseEntity<OrganizationResponse> reactivateOrganization(@PathVariable Long organizationId){
+
+        OrganizationResponse organizationResponse = organizationService.reactivateOrganization(organizationId);
+
+        return ResponseEntity.ok(organizationResponse);
+    }
+
+    @PatchMapping("/{organizationId}/suspend")
+    public ResponseEntity<Void> suspendOrganization(@PathVariable Long organizationId){
+
+        organizationService.suspendOrganization(organizationId);
+
+        return ResponseEntity.noContent().build();
+    }
+
 
 }
