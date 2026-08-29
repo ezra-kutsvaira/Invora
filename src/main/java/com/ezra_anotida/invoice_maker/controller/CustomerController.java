@@ -2,6 +2,8 @@ package com.ezra_anotida.invoice_maker.controller;
 
 import com.ezra_anotida.invoice_maker.dto.customer.CreateCustomerRequest;
 import com.ezra_anotida.invoice_maker.dto.customer.CustomerResponse;
+import com.ezra_anotida.invoice_maker.dto.customer.CustomerSummaryResponse;
+import com.ezra_anotida.invoice_maker.dto.customer.UpdateCustomerRequest;
 import com.ezra_anotida.invoice_maker.service.CustomerService;
 import jakarta.validation.Valid;
 import org.springframework.http.HttpStatus;
@@ -21,29 +23,82 @@ public class CustomerController {
     }
 
     @PostMapping
-    public ResponseEntity<CustomerResponse> createCustomer(@Valid @PathVariable Long organizationId,  @RequestBody CreateCustomerRequest createCustomerRequest){
+    public ResponseEntity<CustomerResponse> createCustomer(@PathVariable ("organizationId") Long organizationId, @Valid @RequestBody CreateCustomerRequest createCustomerRequest){
 
-        CustomerResponse customerResponse = customerService.createCustomer(organizationId, createCustomerRequest);
+        CustomerResponse customer = customerService.createCustomer(organizationId, createCustomerRequest);
 
         return ResponseEntity
                 .status(HttpStatus.CREATED)
-                .body(customerResponse);
+                .body(customer);
     }
 
+
     @GetMapping("/{customerId}")
-    public ResponseEntity<CustomerResponse> getByCustomerId(@PathVariable Long organizationId, @PathVariable Long customerId){
+    public ResponseEntity<CustomerResponse> getByCustomerId(@PathVariable ("organizationId") Long organizationId, @PathVariable("customerId") Long customerId){
 
-        CustomerResponse customerResponse = customerService.getCustomerById(organizationId, customerId);
+        CustomerResponse customer = customerService.getCustomerById(organizationId, customerId);
 
-        return ResponseEntity.ok(customerResponse);
+        return ResponseEntity.ok(customer);
 
     }
 
     @GetMapping
-    public ResponseEntity<List<CustomerResponse>> getAllCustomers(@PathVariable Long organizationId){
+    public ResponseEntity<List<CustomerResponse>> getAllCustomers(@PathVariable ("organizationId") Long organizationId){
 
         List<CustomerResponse> customers = customerService.getAllCustomers(organizationId);
 
         return ResponseEntity.ok(customers);
+    }
+
+    @GetMapping("/summaries")
+    public ResponseEntity<List<CustomerSummaryResponse>> getCustomerSummaries(@PathVariable ("organizationId") Long organizationId){
+
+        List<CustomerSummaryResponse> summaries = customerService.getCustomerSummaries(organizationId);
+
+        return ResponseEntity.ok(summaries);
+
+    }
+
+    @PutMapping("/{customerId}")
+    public ResponseEntity<CustomerResponse> updateCustomer(@PathVariable ("organizationId") Long organizationId, @PathVariable ("customerId") Long customerId, @Valid @RequestBody UpdateCustomerRequest updateCustomerRequest){
+
+        CustomerResponse customer = customerService.updateCustomer(organizationId, customerId, updateCustomerRequest);
+
+        return ResponseEntity.ok(customer);
+    }
+
+    @PatchMapping("/{customerId}/deactivate")
+    public ResponseEntity<Void> deactivateCustomer(@PathVariable ("organizationId") Long organizationId, @PathVariable ("customerId")  Long customerId){
+
+        customerService.deactivateCustomer(organizationId, customerId);
+
+        return ResponseEntity.noContent().build();
+    }
+
+    //Searching Customers
+    @GetMapping("/search")
+    public ResponseEntity<List<CustomerResponse>> searchCustomers(@PathVariable ("organizationId") Long organizationId, @RequestParam ("keyword") String keyword){
+
+        List<CustomerResponse> customers = customerService.searchCustomers(organizationId, keyword);
+
+        return ResponseEntity.ok(customers);
+    }
+
+    //Reactivate Customer
+    @PatchMapping("/{customerId}/reactivate")
+    public ResponseEntity<CustomerResponse> reactivateCustomer(@PathVariable ("organizationId") Long organizationId, @PathVariable ("customerId") Long customerId){
+
+        CustomerResponse customer = customerService.reactivateCustomer(organizationId, customerId);
+
+        return ResponseEntity.ok(customer);
+    }
+
+    @GetMapping("/inactive")
+    public ResponseEntity<List<CustomerResponse>> getInactiveCustomers (@PathVariable ("organizationId") Long organizationId){
+
+        List<CustomerResponse> customers = customerService.getInactiveCustomers(organizationId);
+
+        return ResponseEntity.ok(customers);
+
     }
 }
