@@ -3,8 +3,6 @@ package com.ezra_anotida.invoice_maker.controller;
 import com.ezra_anotida.invoice_maker.dto.company.CompanyProfileResponse;
 import com.ezra_anotida.invoice_maker.dto.company.CreateCompanyProfileRequest;
 import com.ezra_anotida.invoice_maker.dto.company.UpdateCompanyProfileRequest;
-import com.ezra_anotida.invoice_maker.dto.invoice.InvoiceResponse;
-import com.ezra_anotida.invoice_maker.dto.invoice.UpdateInvoiceRequest;
 import com.ezra_anotida.invoice_maker.service.CompanyProfileService;
 import jakarta.validation.Valid;
 import org.springframework.http.HttpStatus;
