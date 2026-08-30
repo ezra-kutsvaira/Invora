@@ -4,6 +4,7 @@ package com.ezra_anotida.invoice_maker.controller;
 import com.ezra_anotida.invoice_maker.dto.invoice.CreateInvoiceRequest;
 import com.ezra_anotida.invoice_maker.dto.invoice.InvoiceResponse;
 import com.ezra_anotida.invoice_maker.dto.invoice.InvoiceSummaryResponse;
+import com.ezra_anotida.invoice_maker.dto.invoice.UpdateInvoiceRequest;
 import com.ezra_anotida.invoice_maker.service.InvoiceService;
 
 import jakarta.validation.Valid;
@@ -33,7 +34,7 @@ public class InvoiceController {
                 .body(invoice);
     }
 
-    //Get By Id
+
     @GetMapping("/{invoiceId}")
     public ResponseEntity<InvoiceResponse> getInvoiceById (@PathVariable ("organizationId") Long organizationId, @PathVariable ("invoiceId") Long invoiceId){
 
@@ -53,30 +54,62 @@ public class InvoiceController {
 
     //Get All Invoices
     @GetMapping
-    public  ResponseEntity<List<InvoiceResponse>> getAllInvoices (@PathVariable ("organizationId") Long organizationId){
+    public ResponseEntity<List<InvoiceResponse>> getAllInvoices (@PathVariable ("organizationId") Long organizationId){
 
         List<InvoiceResponse> invoices = invoiceService.getAllInvoices(organizationId);
 
         return ResponseEntity.ok(invoices);
     }
 
-    @GetMapping("/summary")
-    public  ResponseEntity<List<InvoiceSummaryResponse>> getInvoiceSummaries (@PathVariable ("organizationId") Long organizationId) {
-;
+    @GetMapping("/summaries")
+    public ResponseEntity<List<InvoiceSummaryResponse>> getInvoiceSummaries (@PathVariable ("organizationId") Long organizationId) {
+
         List<InvoiceSummaryResponse> summaryResponses = invoiceService.getInvoiceSummaries(organizationId);
 
         return ResponseEntity.ok(summaryResponses);
     }
 
-    @GetMapping("/invoices/{customerId}")
-    public  ResponseEntity<List<InvoiceResponse>> getInvoicesByCustomer (@PathVariable ("organizationId") Long organizationId, @PathVariable ("customerId") Long customerId){
+    @GetMapping("/customer/{customerId}")
+    public ResponseEntity<List<InvoiceResponse>> getInvoicesByCustomer (@PathVariable ("organizationId") Long organizationId, @PathVariable ("customerId") Long customerId){
 
-        List<InvoiceResponse> customerInvoices = invoiceService.getInvoicesByCustomer(organizationId, customerId);
+        List<InvoiceResponse> invoices = invoiceService.getInvoicesByCustomer(organizationId, customerId);
 
-        return ResponseEntity.ok(customerInvoices);
+        return ResponseEntity.ok(invoices);
     }
 
-    
+    @PutMapping("/{invoiceId}")
+    public ResponseEntity<InvoiceResponse> updateInvoice (@PathVariable ("organizationId") Long organizationId, @PathVariable ("invoiceId") Long invoiceId, @Valid @RequestBody UpdateInvoiceRequest updateInvoiceRequest){
 
+        InvoiceResponse updatedInvoice = invoiceService.updateInvoice(organizationId, invoiceId, updateInvoiceRequest);
+
+        return  ResponseEntity.ok(updatedInvoice);
+
+    }
+
+    @PatchMapping("/{invoiceId}/issue")
+    public ResponseEntity<InvoiceResponse> issueInvoice (@PathVariable ("organizationId") Long organizationId, @PathVariable ("invoiceId") Long invoiceId){
+
+        InvoiceResponse invoice = invoiceService.issueInvoice(organizationId, invoiceId);
+
+        return ResponseEntity.ok(invoice);
+
+    }
+
+    @PatchMapping("/{invoiceId}/cancel")
+    public ResponseEntity<InvoiceResponse> cancelInvoice (@PathVariable ("organizationId") Long organizationId, @PathVariable ("invoiceId") Long invoiceId){
+
+        InvoiceResponse invoice = invoiceService.cancelInvoice(organizationId, invoiceId);
+
+        return ResponseEntity.ok(invoice);
+    }
+
+
+    @DeleteMapping("/{invoiceId}/delete")
+    public ResponseEntity<Void> deleteInvoice (@PathVariable ("organizationId") Long organizationId, @PathVariable ("invoiceId") Long invoiceId){
+
+        invoiceService.deleteInvoice(organizationId, invoiceId);
+
+        return ResponseEntity.noContent().build();
+    }
 
 }
