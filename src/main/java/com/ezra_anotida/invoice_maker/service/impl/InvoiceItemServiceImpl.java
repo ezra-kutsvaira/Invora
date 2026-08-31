@@ -77,7 +77,7 @@ public class InvoiceItemServiceImpl implements InvoiceItemService {
     }
 
     @Override
-    public InvoiceItemResponse updateInvoiceItem(Long organizationId, Long itemId, UpdateInvoiceItemRequest request) {
+    public InvoiceItemResponse updateInvoiceItem(Long organizationId, Long invoiceId, Long itemId, UpdateInvoiceItemRequest request) {
 
         InvoiceItem item = findItem(organizationId, itemId);
 
@@ -103,7 +103,7 @@ public class InvoiceItemServiceImpl implements InvoiceItemService {
     }
 
     @Override
-    public void removeInvoiceItem(Long organizationId, Long itemId) {
+    public void removeInvoiceItem(Long organizationId, Long invoiceId, Long itemId) {
 
         InvoiceItem item = findItem(organizationId, itemId);
 

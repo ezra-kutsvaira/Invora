@@ -10,7 +10,7 @@ public interface InvoiceItemService {
 
     List<InvoiceItemResponse> getItemsByInvoice(Long organizationId, Long invoiceId);
 
-    InvoiceItemResponse updateInvoiceItem(Long organizationId, Long invoiceItemId, UpdateInvoiceItemRequest request);
+    InvoiceItemResponse updateInvoiceItem(Long organizationId, Long invoiceId,  Long invoiceItemId, UpdateInvoiceItemRequest request);
 
-    void removeInvoiceItem(Long organizationId, Long invoiceItemId);
+    void removeInvoiceItem(Long organizationId,Long invoiceId, Long invoiceItemId);
 }
