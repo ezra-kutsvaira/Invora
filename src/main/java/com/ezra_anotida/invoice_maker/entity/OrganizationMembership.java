@@ -23,7 +23,7 @@ import java.time.LocalDateTime;
                 ),
                 @Index(
                         name = "idx_membership_user",
-                        columnList = "userId"
+                        columnList = "user_id"
                 )
         }
 )
@@ -61,7 +61,7 @@ public class OrganizationMembership {
         LocalDateTime now = LocalDateTime.now();
         createdAt = now;
         updatedAt = now;
-        
+
         if (status == null){
             status = MembershipStatus.ACTIVE;
         }
