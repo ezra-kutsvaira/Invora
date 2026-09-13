@@ -11,4 +11,8 @@ databaseChangeLog:
       file: changes/003-create-invoicing-tables.yaml
       relativeToChangelogFile: true
 
+  - include:
+      file: changes/004-add-authentication-foundation.yaml
+      relativeToChangelogFile: true
+
 
