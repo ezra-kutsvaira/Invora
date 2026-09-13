@@ -8,16 +8,26 @@ import java.time.LocalDateTime;
 
 @Entity
 @Table(
-        name = "organization_memberships",
-        uniqueConstraints = @UniqueConstraint(
-                name = "uk_organization_memberships_organization_user",
-                columnNames = {"organization_id", "user_id"}
-        ),
+       name = "organization_memberships",
+       uniqueConstraints = {
+               @UniqueConstraint(
+                       name = "uk_organization_memberships_organization_user",
+                       columnNames = {"organization_id", "user_id"}
+               )
+       },
+
         indexes = {
-                @Index(name = "idx_memberships_organization", columnList = "organization_id"),
-                @Index(name = "idx_memberships_user", columnList = "user_id")
+                @Index(
+                        name = "idx_memberships_organization",
+                        columnList = "organization_id"
+                ),
+                @Index(
+                        name = "idx_membership_user",
+                        columnList = "userId"
+                )
         }
 )
+
 public class OrganizationMembership {
 
     @Id
@@ -25,11 +35,11 @@ public class OrganizationMembership {
     private Long id;
 
     @ManyToOne(fetch = FetchType.LAZY, optional = false)
-    @JoinColumn(name = "organization_id", nullable = false)
+    @JoinColumn(name = "organization_id", nullable = false, foreignKey = @ForeignKey(name = "fk_memberships_organization"))
     private Organization organization;
 
     @ManyToOne(fetch = FetchType.LAZY, optional = false)
-    @JoinColumn(name = "user_id", nullable = false)
+    @JoinColumn(name = "user_id", nullable = false,  foreignKey = @ForeignKey(name = "fk_memberships_user"))
     private User user;
 
     @Enumerated(EnumType.STRING)
@@ -51,7 +61,10 @@ public class OrganizationMembership {
         LocalDateTime now = LocalDateTime.now();
         createdAt = now;
         updatedAt = now;
-        if (status == null) status = MembershipStatus.ACTIVE;
+        
+        if (status == null){
+            status = MembershipStatus.ACTIVE;
+        }
     }
 
     @PreUpdate
