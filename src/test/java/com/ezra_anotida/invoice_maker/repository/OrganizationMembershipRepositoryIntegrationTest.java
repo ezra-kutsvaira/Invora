@@ -6,6 +6,7 @@ import com.ezra_anotida.invoice_maker.entity.OrganizationMembership;
 import com.ezra_anotida.invoice_maker.entity.User;
 import com.ezra_anotida.invoice_maker.enums.MembershipStatus;
 import com.ezra_anotida.invoice_maker.enums.OrganizationRole;
+import com.ezra_anotida.invoice_maker.enums.UserStatus;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
@@ -13,6 +14,8 @@ import org.springframework.context.annotation.Import;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.transaction.annotation.Transactional;
+
+import java.time.Instant;
 
 import static org.assertj.core.api.AssertionsForClassTypes.assertThat;
 import static org.assertj.core.api.AssertionsForClassTypes.assertThatThrownBy;
@@ -85,8 +88,9 @@ class OrganizationMembershipRepositoryIntegrationTest {
         User user = new User();
         user.setName(name);
         user.setEmail(email);
-        user.setPassword("encoded-test-password");
-        user.setEnabled(true);
+        user.setPasswordHash("encoded-test-password");
+        user.setStatus(UserStatus.ACTIVE);
+        user.setEmailVerifiedAt(Instant.now());
 
         return userRepository.saveAndFlush(user);
     }
