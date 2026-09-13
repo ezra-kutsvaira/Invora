@@ -112,7 +112,7 @@ public class OrganizationMembershipServiceImpl implements OrganizationMembership
 
         OrganizationMembership membership = findMembership(organizationId, membershipId);
 
-        membership.setStatus(MembershipStatus.SUSPENDED);
+        membership.setStatus(MembershipStatus.REMOVED);
 
         membershipRepository.save(membership);
     }
