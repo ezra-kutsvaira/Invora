@@ -44,7 +44,11 @@ class LiquibaseMigrationIntegrationTest {
                         "010-create-invoice-items",
                         "011-create-payments",
                         "012-create-receipts",
-                        "013-create-audit-logs"
+                        "013-create-audit-logs",
+                        "014-secure-users",
+                        "015-create-refresh-tokens",
+                        "016-create-email-verification-tokens",
+                        "017-create-password-reset-tokens"
                 );
     }
 
@@ -73,7 +77,10 @@ class LiquibaseMigrationIntegrationTest {
                         "invoice_items",
                         "payments",
                         "receipts",
-                        "audit_logs"
+                        "audit_logs",
+                        "refresh_tokens",
+                        "email_verification_tokens",
+                        "password_reset_tokens"
                 );
 
     }
