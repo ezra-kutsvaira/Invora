@@ -22,47 +22,33 @@ public class AuditLogController {
     }
 
     @GetMapping("/{auditLogId}")
-    public ResponseEntity<AuditLogResponse> getAuditLogById(
-            @PathVariable("organizationId") Long organizationId,
-            @PathVariable("auditLogId") Long auditLogId
-    ) {
-        AuditLogResponse auditLog =
-                auditLogService.getAuditLogById(organizationId, auditLogId);
+    public ResponseEntity<AuditLogResponse> getAuditLogById(@PathVariable("organizationId") Long organizationId, @PathVariable("auditLogId") Long auditLogId) {
+
+        AuditLogResponse auditLog = auditLogService.getAuditLogById(organizationId, auditLogId);
 
         return ResponseEntity.ok(auditLog);
     }
 
     @GetMapping
-    public ResponseEntity<List<AuditLogResponse>> getAllAuditLogs(
-            @PathVariable("organizationId") Long organizationId
-    ) {
-        List<AuditLogResponse> auditLogs =
-                auditLogService.getAllAuditLogs(organizationId);
+    public ResponseEntity<List<AuditLogResponse>> getAllAuditLogs(@PathVariable("organizationId") Long organizationId) {
+
+        List<AuditLogResponse> auditLogs = auditLogService.getAllAuditLogs(organizationId);
 
         return ResponseEntity.ok(auditLogs);
     }
 
     @GetMapping("/entity")
-    public ResponseEntity<List<AuditLogResponse>> getAuditLogsByEntity(
-            @PathVariable("organizationId") Long organizationId,
-            @RequestParam("entityType") String entityType,
-            @RequestParam("entityId") Long entityId
-    ) {
-        List<AuditLogResponse> auditLogs =
-                auditLogService.getAuditLogsByEntity(
-                        organizationId, entityType, entityId
-                );
+    public ResponseEntity<List<AuditLogResponse>> getAuditLogsByEntity(@PathVariable("organizationId") Long organizationId, @RequestParam("entityType") String entityType, @RequestParam("entityId") Long entityId) {
+
+        List<AuditLogResponse> auditLogs = auditLogService.getAuditLogsByEntity(organizationId, entityType, entityId);
 
         return ResponseEntity.ok(auditLogs);
     }
 
     @GetMapping("/action")
-    public ResponseEntity<List<AuditLogResponse>> getAuditLogsByAction(
-            @PathVariable("organizationId") Long organizationId,
-            @RequestParam("action") String action
-    ) {
-        List<AuditLogResponse> auditLogs =
-                auditLogService.getAuditLogsByAction(organizationId, action);
+    public ResponseEntity<List<AuditLogResponse>> getAuditLogsByAction(@PathVariable("organizationId") Long organizationId, @RequestParam("action") String action) {
+
+        List<AuditLogResponse> auditLogs = auditLogService.getAuditLogsByAction(organizationId, action);
 
         return ResponseEntity.ok(auditLogs);
     }
@@ -76,8 +62,8 @@ public class AuditLogController {
 
             @RequestParam("endDate")
             @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME)
-            LocalDateTime endDate
-    ) {
+            LocalDateTime endDate) {
+
         if (startDate.isAfter(endDate)) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "startDate must be before or equal to endDate");
         }

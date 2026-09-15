@@ -54,6 +54,10 @@ public class User {
         if(status == null){
             status = UserStatus.PENDING_VERIFICATION;
         }
+
+        if(passwordChangedAt == null){
+            passwordChangedAt = Instant.now();
+        }
     }
 
     @PreUpdate

@@ -91,6 +91,7 @@ class OrganizationMembershipRepositoryIntegrationTest {
         user.setPasswordHash("encoded-test-password");
         user.setStatus(UserStatus.ACTIVE);
         user.setEmailVerifiedAt(Instant.now());
+        user.setPasswordChangedAt(Instant.now());
 
         return userRepository.saveAndFlush(user);
     }
