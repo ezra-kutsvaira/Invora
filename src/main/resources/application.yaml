@@ -41,6 +41,23 @@ spring:
     init:
       mode: never
 
+
+invora:
+  security:
+    issuer: "${JWT_ISSUER:invora-api}"
+    audience: "${JWT_AUDIENCE:invora-client}"
+
+    access-token-ttl: "${JWT_ACCESS_TOKEN_TTL:PT15M}"
+    refresh-token-ttl: "${JWT_REFRESH_TOKEN_TTL:P7D}"
+
+    email-verification-token-ttl: "${EMAIL_VERIFICATION_TOKEN_TTL:PT24H}"
+    password-reset-token-ttl: "${PASSWORD_RESET_TOKEN_TTL:PT30M}"
+
+    rsa:
+      public-key: "${JWT_PUBLIC_KEY_LOCATION:file:./keys/public-key.pem}"
+      private-key: "${JWT_PRIVATE_KEY_LOCATION:file:./keys/private-key.pem}"
+
+
 server:
   port: ${SERVER_PORT:8080}
 
