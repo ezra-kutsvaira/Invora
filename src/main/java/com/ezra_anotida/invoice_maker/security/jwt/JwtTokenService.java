@@ -36,7 +36,7 @@ public class JwtTokenService {
             throw new IllegalStateException("Cannot issue an access token for an inactive user");
         }
 
-        if(principal.isAccountNonExpired()){
+        if(!principal.isAccountNonLocked()){
             throw new IllegalStateException("Cannot issue a token for a locked user");
         }
 
