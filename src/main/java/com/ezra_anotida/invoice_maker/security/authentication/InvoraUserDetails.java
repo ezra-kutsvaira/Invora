@@ -2,7 +2,6 @@ package com.ezra_anotida.invoice_maker.security.authentication;
 
 import com.ezra_anotida.invoice_maker.entity.User;
 import com.ezra_anotida.invoice_maker.enums.UserStatus;
-import org.jspecify.annotations.Nullable;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
 
@@ -103,5 +102,6 @@ public final class InvoraUserDetails implements UserDetails {
     public boolean isEnabled(){
         return userStatus == UserStatus.ACTIVE;
     }
+
 
 }

@@ -102,6 +102,7 @@ public class JwtConfig {
             }
 
             return privateKey;
+
         }catch (IOException | IllegalArgumentException exception){
             throw new IllegalStateException("Unable to load RSA private key from " + resource.getDescription(), exception);
         }
