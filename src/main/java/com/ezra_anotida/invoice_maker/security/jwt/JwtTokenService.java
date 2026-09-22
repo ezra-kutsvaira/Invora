@@ -60,9 +60,9 @@ public class JwtTokenService {
 
         JwtClaimsSet jwsClaimSet = JwtClaimsSet
                 .builder()
-                .issuer(securityProperties.issuer())
-                .subject(userId.toString())
-                .audience(List.of(securityProperties.audience()))
+                .issuer(securityProperties.issuer()) ///who created the token
+                .subject(userId.toString()) ///who does this token represent - id
+                .audience(List.of(securityProperties.audience()))  ///who should accept this token
                 .issuedAt(issuedAt)
                 .expiresAt(expiredAt)
                 .id(UUID.randomUUID().toString())
