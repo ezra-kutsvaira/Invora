@@ -176,4 +176,5 @@ public class RefreshToken {
     public void setUserAgent(String userAgent) {
         this.userAgent = userAgent;
     }
+
 }
