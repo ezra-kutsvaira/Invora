@@ -9,5 +9,4 @@ public record AuthenticationResponse(
         long expiresIn,
 
         String refreshToken
-) {
-}
+) {}
