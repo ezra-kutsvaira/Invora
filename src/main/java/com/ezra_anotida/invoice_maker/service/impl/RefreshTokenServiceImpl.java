@@ -3,6 +3,7 @@ package com.ezra_anotida.invoice_maker.service.impl;
 import com.ezra_anotida.invoice_maker.config.SecurityProperties;
 import com.ezra_anotida.invoice_maker.entity.RefreshToken;
 import com.ezra_anotida.invoice_maker.entity.User;
+import com.ezra_anotida.invoice_maker.enums.UserStatus;
 import com.ezra_anotida.invoice_maker.exception.security.InvalidRefreshTokenException;
 import com.ezra_anotida.invoice_maker.exception.security.RefreshTokenReuseException;
 import com.ezra_anotida.invoice_maker.repository.RefreshTokenRepository;
@@ -63,7 +64,6 @@ public class RefreshTokenServiceImpl implements RefreshTokenService {
             throw new InvalidRefreshTokenException("Refresh token is required");
         }
 
-
         String tokenHash = opaqueTokenUtils.hashToken(rawRefreshToken);
 
         RefreshToken existingToken = refreshTokenRepository.findByTokenHashForUpdate(tokenHash)
@@ -88,6 +88,12 @@ public class RefreshTokenServiceImpl implements RefreshTokenService {
         }
 
         User user = existingToken.getUser();
+
+        if(user.getStatus() != UserStatus.ACTIVE){
+            refreshTokenRepository.revokeActiveTokenFamily(existingToken.getFamilyId(), now, "USER_INACTIVE");
+
+            throw new InvalidRefreshTokenException("User account is not valid");
+        }
 
         existingToken.setRevokedAt(now);
         existingToken.setRevokedReason(ROTATED_REASON);
